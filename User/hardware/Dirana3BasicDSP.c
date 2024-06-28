@@ -12,6 +12,9 @@
 #include <arm_math.h>
 
 
+float maxToneScal;
+float maxGEqScal;
+
 /***************************************************************************/
 
 const uint32_t gEQAddr[] = {
@@ -216,11 +219,11 @@ int8_t setFader(char channel, float att)
 	float volFad;
 	uint32_t txdata;
 	
-	if(att > 66.0)  // inf att
+	if(att <-66)  // inf att
 		txdata = 0;
 	else
 	{
-		volFad = powf(10, (-att)/20.0);
+		volFad = powf(10, att/20.0);
 		txdata = dataConv('Y', volFad);
 	}
 	
@@ -340,6 +343,7 @@ void setTonePreScal(void)
 		maxGain = sysTone->trebleGain;
 	
 	scal = powf(10, (-maxGain)/20.0);
+	maxToneScal = maxGain;
 	
 	txdata = dataConv('Y', scal);
 	Set_ADSP(ADSP_Y_Vol_DesScalBMTP, txdata);
@@ -478,6 +482,7 @@ void setGraphicEQPreScal(void)
 	}
 	
 	scal = powf(10, (-maxGain)/20.0);
+	maxGEqScal = maxGain;
 	
 	txdata = dataConv('Y', scal);
 	Set_ADSP(ADSP_Y_Vol_DesScalGEq, txdata);
@@ -837,7 +842,7 @@ void initQPDpara(struct quasiPD* para)
 	para->InPntr2 = ADSP_X_FrontOutL_REL;
 	para->timeAttack = 0.015;
 	para->timeHold = 8;
-	para->timeRelease = 1.5;
+	para->timeRelease = 0.8;
 	
 }
 
@@ -1064,13 +1069,95 @@ void updateFilter(struct filterSystem para, uint8_t order)
 	
 }
 
+void initKeyFuncPara(struct keyFunc* para)
+{
+	para->OnOffAUB = false;
+	para->AUBGain = 3;
+	
+	para->OnOffALE = false;
+	
+	para->OnOffLEV = false;
+	para->LEVSmoothTime = 1;
+	para->LEVReleaseTime = 2;
+	para->LEVExpanderThres = -60;
+	
+	para->OnOffAEQ = false;
+	para->AEQReferSpectrum[0] = 0;
+	para->AEQReferSpectrum[1] = -2;
+	para->AEQReferSpectrum[2] = -8;
+	para->AEQSpectrumOffset[0] = 0;
+	para->AEQSpectrumOffset[1] = 0;
+	para->AEQSpectrumOffset[2] = 0;
+}
+
+void initUltraBass(bool onoff)
+{
+	if(onoff == true)
+	{
+		Set_ADSP(ADSP_X_AUB2_Mode, 0x000003);
+		Set_ADSP(ADSP_X_FInPntr, ADSP_X_AUB2_out1_REL);
+		Set_ADSP(ADSP_X_RInPntr, ADSP_X_AUB2_out1_REL);
+	}
+	else
+	{
+		Set_ADSP(ADSP_X_FInPntr, ADSP_X_Loudf_OutL_REL);
+		Set_ADSP(ADSP_X_RInPntr, ADSP_X_Loudf_OutL_REL);
+		Set_ADSP(ADSP_X_AUB2_Mode, 0x000000);
+	}
+}
+
+
+void setUltraBassGain(float gain)
+{
+	float g, scal, tlv;
+	uint32_t txdata;
+	g = powf(10,gain/20.0)/16.0;
+	txdata = dataConv('X',g);
+	Set_ADSP(ADSP_X_AUB2_AGCMaxGain, txdata);
+	
+	scal = -(maxGEqScal+maxToneScal);
+	tlv = powf(10, (scal-3.0)/20.0);
+	txdata = dataConv('X',tlv);
+	Set_ADSP(ADSP_X_AUB2_TargetLevel, txdata);
+}
+
+
+void setControlFilter(float time)
+{
+	uint32_t data;
+	if(time == 0)
+		data = 0;
+	else
+		data = dataConv('X', powf(ADSP_E, -64.0/(ADSP_FS*time)));
+	Set_ADSP(ADSP_X_ALE_PAR_OutS_Gain, data);
+	delay_ms(1500*time);
+}
+
+void initAutoLevEq(bool onoff)
+{
+	if(onoff == true)
+	{
+		Set_ADSP(ADSP_X_EasyP_Index, ADSP_EASYP_ALE_Enable);
+		setControlFilter(0.3);
+		Set_ADSP(ADSP_X_ALE_PAR_OnOff, 1);
+	}
+	else
+	{
+		Set_ADSP(ADSP_X_EasyP_Index, ADSP_EASYP_ALE_Disable);
+		Set_ADSP(ADSP_X_CompExp_InPntr, ADSP_X_PChannelMode_OutL);
+	}
+}
 
 
 
-
-
-
-
+void initAutoLeveling(bool onoff)
+{
+	
+	
+	
+	setControlFilter(0.3);
+	Set_ADSP(ADSP_X_ALE_PAR_LEV_OnOff, 1);
+}
 
 
 

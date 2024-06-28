@@ -56,13 +56,14 @@ extern const unsigned char img_arrowDown12x[];
 extern const unsigned char img_arrowLeft11x16[];
 extern const unsigned char img_arrowRight11x16[];
 extern const unsigned char img_mDisplay50x[];
+extern const unsigned char img_mAbout50x[];
 extern const unsigned char img_mUntitled50x[];
 
 extern const unsigned char img_volGain47x20[];
 extern const unsigned char img_balLeft47x20[];
 extern const unsigned char img_balRight47x20[];
 extern const unsigned char img_filtHP44x44[];
-
+extern const unsigned char img_ultraBass44x44[];
 
 extern const unsigned char img_qrcode[];
 #endif

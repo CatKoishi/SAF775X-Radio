@@ -3,6 +3,7 @@
 #include "systick.h"
 
 #include <stdio.h>
+#include <math.h>
 
 #include "init.h"
 #include "SAF775X.h"
@@ -47,7 +48,7 @@ volatile uint8_t keyValue[KEY_NUM];
 struct displayConfig sDisplay;
 
 // DAV,GSA[0,8],VU
-volatile uint8_t nGsaVal[11] = {0};
+volatile uint8_t nGsaVal[10] = {0};
 volatile uint32_t nQPeakDet;
 
 struct Dirana3Radio sTuner;
@@ -59,13 +60,15 @@ struct basicControl sAudioBasic;
 struct toneControl sAudioTone;
 struct graphicEQ sAudioEQ;
 struct filterSystem sAudioFilter;
+struct keyFunc sAudioKeyFunc;
 
 struct device sDevice = {
 	.bAutoMono=true,
 	.bSoftReboot=true,
-	.sInfo.pid[0]=1,
-	.sInfo.pid[1]=2,
-	.sInfo.pid[2]=20230905,
+	.sInfo.pid[0]=4,  // flash arrange
+	.sInfo.pid[1]=1,  // version
+	.sInfo.pid[2]=5,  // subversion
+	.sInfo.pid[3]=20231105,
 };
 
 /************************************Indicator*********************************/
@@ -126,15 +129,27 @@ void saveSettings(uint8_t flashID)
 		flash_erase(ERASE_PAGE,6);
 		flash_erase(ERASE_PAGE,7);
 		flash_program(6<<8,(uint8_t *)&sAudioFilter,sizeof(sAudioFilter));
+		flash_erase(ERASE_PAGE,8);
+		flash_program_page(8<<8,(uint8_t *)&sAudioKeyFunc,sizeof(sAudioKeyFunc));
 	}
 	
 }
 
 void readSettings(uint8_t flashID)
 {
+	uint32_t temp[4];
+	
 	if(flashID == FLASH_DEVICE)
 	{
+		temp[0] = sDevice.sInfo.pid[0];
+		temp[1] = sDevice.sInfo.pid[1];
+		temp[2] = sDevice.sInfo.pid[2];
+		temp[3] = sDevice.sInfo.pid[3];
 		flash_read(0<<8,(uint8_t *)&sDevice,sizeof(sDevice));
+		sDevice.sInfo.pid[0] = temp[0];
+		sDevice.sInfo.pid[1] = temp[1];
+		sDevice.sInfo.pid[2] = temp[2];
+		sDevice.sInfo.pid[3] = temp[3];
 	}
 	else if(flashID == FLASH_RADIO)
 	{
@@ -151,6 +166,7 @@ void readSettings(uint8_t flashID)
 		flash_read(4<<8,(uint8_t *)&sAudioTone,sizeof(sAudioTone));
 		flash_read(5<<8,(uint8_t *)&sAudioEQ,sizeof(sAudioEQ));
 		flash_read(6<<8,(uint8_t *)&sAudioFilter,sizeof(sAudioFilter));
+		flash_read(8<<8,(uint8_t *)&sAudioKeyFunc,sizeof(sAudioKeyFunc));
 	}
 }
 
@@ -158,41 +174,59 @@ void saveChannels(void)
 {
 	if(sTuner.Radio.nBandMode == BAND_FM)
 	{
-		flash_erase(ERASE_PAGE,8);
-		flash_program_page(8<<8,(uint8_t *)&nChannelFreq[BAND_FM],sizeof(nChannelFreq[BAND_FM]));
-		flash_program_page((9<<8)-1,&nBandChNum[BAND_FM],1);
+		flash_erase(ERASE_PAGE,9);
+		flash_program_page(9<<8,(uint8_t *)&nChannelFreq[BAND_FM],sizeof(nChannelFreq[BAND_FM]));
+		flash_program_page((10<<8)-1,&nBandChNum[BAND_FM],1);
 	}
 	else if(sTuner.Radio.nBandMode == BAND_LW)
 	{
-		flash_erase(ERASE_PAGE,9);
-		flash_program_page(9<<8,(uint8_t *)&nChannelFreq[BAND_LW],sizeof(nChannelFreq[BAND_LW]));
-		flash_program_page((10<<8)-1,&nBandChNum[BAND_LW],1);
+		flash_erase(ERASE_PAGE,10);
+		flash_program_page(10<<8,(uint8_t *)&nChannelFreq[BAND_LW],sizeof(nChannelFreq[BAND_LW]));
+		flash_program_page((11<<8)-1,&nBandChNum[BAND_LW],1);
 	}
 	else if(sTuner.Radio.nBandMode == BAND_MW)
 	{
-		flash_erase(ERASE_PAGE,10);
-		flash_program_page(10<<8,(uint8_t *)&nChannelFreq[BAND_MW],sizeof(nChannelFreq[BAND_MW]));
-		flash_program_page((11<<8)-1,&nBandChNum[BAND_MW],1);
+		flash_erase(ERASE_PAGE,11);
+		flash_program_page(11<<8,(uint8_t *)&nChannelFreq[BAND_MW],sizeof(nChannelFreq[BAND_MW]));
+		flash_program_page((12<<8)-1,&nBandChNum[BAND_MW],1);
 	}
 	else if(sTuner.Radio.nBandMode == BAND_SW)
 	{
-		flash_erase(ERASE_PAGE,11);
-		flash_program_page(11<<8,(uint8_t *)&nChannelFreq[BAND_SW],sizeof(nChannelFreq[BAND_SW]));
-		flash_program_page((12<<8)-1,&nBandChNum[BAND_SW],1);
+		flash_erase(ERASE_PAGE,12);
+		flash_program_page(12<<8,(uint8_t *)&nChannelFreq[BAND_SW],sizeof(nChannelFreq[BAND_SW]));
+		flash_program_page((13<<8)-1,&nBandChNum[BAND_SW],1);
 	}
 	
 }
 
 void readChannels(void)
 {
-	flash_read(8<<8,(uint8_t *)&nChannelFreq[BAND_FM],sizeof(nChannelFreq[BAND_FM]));
-	flash_read(9<<8,(uint8_t *)&nChannelFreq[BAND_LW],sizeof(nChannelFreq[BAND_LW]));
-	flash_read(10<<8,(uint8_t *)&nChannelFreq[BAND_MW],sizeof(nChannelFreq[BAND_MW]));
-	flash_read(11<<8,(uint8_t *)&nChannelFreq[BAND_SW],sizeof(nChannelFreq[BAND_SW]));
-	flash_read((9<<8)-1,&nBandChNum[BAND_FM],1);
-	flash_read((10<<8)-1,&nBandChNum[BAND_LW],1);
-	flash_read((11<<8)-1,&nBandChNum[BAND_MW],1);
-	flash_read((12<<8)-1,&nBandChNum[BAND_SW],1);
+	flash_read((10<<8)-1,&nBandChNum[BAND_FM],1);
+	flash_read((11<<8)-1,&nBandChNum[BAND_LW],1);
+	flash_read((12<<8)-1,&nBandChNum[BAND_MW],1);
+	flash_read((13<<8)-1,&nBandChNum[BAND_SW],1);
+	
+	if(nBandChNum[BAND_FM] <= CHS_FM)
+		flash_read(9<<8,(uint8_t *)&nChannelFreq[BAND_FM],sizeof(nChannelFreq[BAND_FM]));
+	else
+		nBandChNum[BAND_FM] = 0;
+	
+	if(nBandChNum[BAND_LW] <= CHS_LW)
+		flash_read(10<<8,(uint8_t *)&nChannelFreq[BAND_LW],sizeof(nChannelFreq[BAND_LW]));
+	else
+		nBandChNum[BAND_LW] = 0;
+	
+	if(nBandChNum[BAND_MW] <= CHS_MW)
+		flash_read(11<<8,(uint8_t *)&nChannelFreq[BAND_MW],sizeof(nChannelFreq[BAND_MW]));
+	else
+		nBandChNum[BAND_MW] = 0;
+	
+	if(nBandChNum[BAND_SW] <= CHS_SW)
+		flash_read(12<<8,(uint8_t *)&nChannelFreq[BAND_SW],sizeof(nChannelFreq[BAND_SW]));
+	else
+		nBandChNum[BAND_SW] = 0;
+	
+	
 }
 
 /************************************Function*********************************/
@@ -205,15 +239,9 @@ void flushKey(void)
 
 void AdjustVolume(int8_t dir)
 {
-	int8_t step;
 	int8_t vol = sTuner.Audio.nVolume[sTuner.Audio.index];
 	
-	if(vol < MID_VOL)
-		vol += dir;
-	else
-		vol += dir*5;
-	
-	vol = inRangeInt(MIN_VOL, MAX_VOL, vol);
+	vol = inRangeInt(MIN_VOL, MAX_VOL, vol+dir*2);
 	
 	SetVolume(vol);
 }
@@ -273,6 +301,11 @@ void VolumeHandler(void)
 		}
 		keyValue[KEY_RENC] = 0;
 	}
+}
+
+void reFillBackLightTimer(void)
+{
+	sDisplay.backTimeCounter = sDisplay.backTime*10;
 }
 
 bool isSigOK(void)
@@ -803,8 +836,13 @@ void MenuAudio(void)
 					
 				};break;
 				
-				case 6:{ // 
+				case 6:{ // ALE
 					
+				};break;
+				
+				case 7:{ // UltraBass
+					sAudioKeyFunc.AUBGain = inRangeInt(0,24,sAudioKeyFunc.AUBGain+lcode);
+					setUltraBassGain(sAudioKeyFunc.AUBGain);
 				};break;
 			}
 			UI_Audio(index,bandSel,paraSel,false);
@@ -832,7 +870,7 @@ void MenuAudio(void)
 void MenuRadio(void)
 {
 	int8_t index = 0;
-	uint16_t tmp;
+	uint8_t tmp;
 	bool demo = sTuner.Config.bDemoMode;
 	
 	UI_Radio(index,true);
@@ -937,13 +975,17 @@ void MenuRadio(void)
 				};break;
 				case 7:{
 				};break;
-				case 8:{
+				case 8:{  // noise blanker
+					sTuner.Config.nNBSA[sTuner.Radio.nRFMode] = inRangeInt(0,3,sTuner.Config.nNBSA[sTuner.Radio.nRFMode]+lcode);
+					SetNoiseBlanker(sTuner.Radio.nRFMode, sTuner.Config.nNBSA[sTuner.Radio.nRFMode], sTuner.Config.nNBSA[sTuner.Radio.nRFMode]);
 				};break;
-				case 9:{
+				case 9:{  // soft mute
+					sTuner.Config.nSoftMute[sTuner.Radio.nRFMode] = inRangeInt(0,4,sTuner.Config.nSoftMute[sTuner.Radio.nRFMode]+lcode);
+					SetSoftMute(sTuner.Config.nSoftMute[sTuner.Radio.nRFMode]);
 				};break;
-				case 10:{
+				case 10:{ // stereo blend
 				};break;
-				case 11:{
+				case 11:{ //dynamic cut
 				};break;
 				default : index = 0;break;
 			}
@@ -1074,7 +1116,7 @@ void MenuDevice(void)
 	printf("Flash: %d KByte  SRAM: %d KByte\n",mcuInfo[0],mcuInfo[1]);
 	
 	printf("Firmware Info:\n");
-	printf("Version: %d.%d        Date: %d\n",sDevice.sInfo.pid[0],sDevice.sInfo.pid[1],sDevice.sInfo.pid[2]);
+	printf("Version: %d.%d        Date: %d\n",sDevice.sInfo.pid[1],sDevice.sInfo.pid[2],sDevice.sInfo.pid[3]);
 	
 	printf("Tuner Info: SAF775X Dirana3\n");
 	printf("ARM ID: %d.%d(Build:%d)\n",ver[0],ver[1],((uint16_t)ver[2]<<8)+ver[3]);
@@ -1082,7 +1124,7 @@ void MenuDevice(void)
 	printf("Radio DSP1 ID: %d%d.%d%d%d\n",(ver[7])&0x0F,(ver[8]>>4)&0x0F,(ver[8])&0x0F,(ver[9]>>4)&0x0F,(ver[9])&0x0F);
 	printf("Radio DSP2 ID: %d%d.%d%d%d\n",(ver[10])&0x0F,(ver[11]>>4)&0x0F,(ver[11])&0x0F,(ver[12]>>4)&0x0F,(ver[12])&0x0F);
 	printf("Audio DSP0 ID: %d%d.%d\n",(ver[14]>>4)&0x0F,(ver[14])&0x0F,(ver[15]>>4)&0x0F);
-	printf("Audio DSP0 ID: %d%d.%d\n",(ver[17]>>4)&0x0F,(ver[17])&0x0F,(ver[18]>>4)&0x0F);
+	printf("Audio DSP1 ID: %d%d.%d\n",(ver[17]>>4)&0x0F,(ver[17])&0x0F,(ver[18]>>4)&0x0F);
 	
 	Get_REG(0xE6,ver,15);
 	printf("Radio DSP0 Patch Status: %d    Version: %d (DSP ID=%d, APP ID=%d)\n",ver[0],(ver[1]>>4)&0x0F,(ver[1])&0x0F,ver[2]);
@@ -1260,14 +1302,15 @@ void MenuMain(void)
 
 int main(void)
 {
-	uint8_t i, j;
-	uint32_t verCheck[3];
+	uint32_t verCheck[4];
 	
 	SYS_Init();
 	GPIO_Init();
+	
 	gpio_bit_set(GPIOC, GPIO_PIN_6); // PC6 PWR_CTR -> 3V3/1V2
 	gpio_bit_set(GPIOC, GPIO_PIN_8); // PC8 PWR_LCD
 	delay_ms(200);
+	
 	Timer_Init();
 	if(bkp_read_data(BKP_DATA_0) != 0xA5A5)
 	{
@@ -1291,10 +1334,10 @@ int main(void)
 	USART_Init();
 	
 	flash_init();
-	delay_ms(50);
+	delay_ms(5);
 	// read flash
-	flash_read(0,(uint8_t *)verCheck,12);
-	if(verCheck[0] == sDevice.sInfo.pid[0] && verCheck[1] == sDevice.sInfo.pid[1] && verCheck[2] == sDevice.sInfo.pid[2])
+	flash_read(0,(uint8_t *)verCheck,16);
+	if(verCheck[0] == sDevice.sInfo.pid[0])
 	{
 		readSettings(FLASH_DEVICE);
 		readSettings(FLASH_RADIO);
@@ -1309,6 +1352,7 @@ int main(void)
 		initBasicControl(&sAudioBasic, true);
 		initTone(&sAudioTone, true);
 		initGraphicEQ(&sAudioEQ, true);
+		initKeyFuncPara(&sAudioKeyFunc);
 		
 		saveSettings(FLASH_DEVICE);
 		saveSettings(FLASH_RADIO);
@@ -1316,6 +1360,7 @@ int main(void)
 		saveSettings(FLASH_AUDIO);
 	}
 	
+	// lcd config
 	lcd_dma_init();
 	LCD_StructInit(&sDisplay, false);
 	sDisplay.backTimeCounter = 100;
@@ -1324,16 +1369,46 @@ int main(void)
 	I2C_Init();
 	TunerStructInit(&sTuner, false);
 	TunerInit();
-	timer_enable(TIMER5);
-	timer_enable(TIMER6);
 	
+	// special func
+	SetFMStereoImprovement(sTuner.Config.bFMSI);
+	if(sTuner.Config.bFMiPD == true || sTuner.Config.nFMANTsel == 1)
+		gpio_bit_set(GPIOC,GPIO_PIN_11);
+	
+	// audio config
 	initBasicControl(&sAudioBasic, false);
 	setDCFilter(sAudioBasic.dcBlock);
 	setMainVol(sAudioBasic.mainVol);
+	setBalance('L', sAudioBasic.balance[0]);
+	setBalance('R', sAudioBasic.balance[1]);
 	sTuner.Audio.index = 0;
 	SetVolume(sTuner.Audio.nVolume[sTuner.Audio.index]);
 	sTuner.Audio.index = 1;
 	SetVolume(sTuner.Audio.nVolume[sTuner.Audio.index]);
+	
+	initSignalScaler();
+	
+	initTone(&sAudioTone, false);
+	initGraphicEQ(&sAudioEQ, false);
+	
+	if(sTuner.Config.bDemoMode == true)
+	{
+		sAudioKeyFunc.OnOffAUB = true;
+		initUltraBass(sAudioKeyFunc.OnOffAUB);
+		setUltraBassGain(sAudioKeyFunc.AUBGain);
+	}
+	
+	// Visual Effects
+	struct graphicSA sAudioGSA;
+	initGraphicSApara(&sAudioGSA);
+	initGraphicSA(sAudioGSA);
+	
+	struct quasiPD sAudioQPD;
+	initQPDpara(&sAudioQPD);
+	initQPD(sAudioQPD);
+	
+	RDS_Init(&sRDSData);
+	
 	nowDET = gpio_input_bit_get(GPIOA,GPIO_PIN_7);
 	if(nowDET == 1)  // headphone plugin
 	{
@@ -1348,25 +1423,13 @@ int main(void)
 		gpio_bit_set(GPIOC, GPIO_PIN_4);
 	}
 	lastDET = nowDET;
+	
 	setMute(ADSP_MUTE_MAIN, 0);
 	
-	initSignalScaler();
-	
-	initTone(&sAudioTone, false);
-	initGraphicEQ(&sAudioEQ, false);
-	
-	struct graphicSA sAudioGSA;
-	initGraphicSApara(&sAudioGSA);
-	initGraphicSA(sAudioGSA);
-	
-	struct quasiPD sAudioQPD;
-	initQPDpara(&sAudioQPD);
-	initQPD(sAudioQPD);
-	
-	
-	RDS_Init(&sRDSData);
-	
 	UI_Main(true);
+	
+	timer_enable(TIMER5);
+	timer_enable(TIMER6);
 	
 	while(1)
 	{
@@ -1483,17 +1546,25 @@ int main(void)
 			bFlagReBoot = false;
 			if(sDevice.bSoftReboot == true)
 			{
-				for(int8_t i=sTuner.Audio.nVolume[sTuner.Audio.index];i>5;i--)
+				for(int8_t i = sAudioBasic.mainVol; i > -66; i--)
 				{
-					SetVolume(sTuner.Audio.nVolume[sTuner.Audio.index]-1);
-					delay_ms(10);
+					setMainVol(i);
+					delay_ms(20);
 				}
 				setMute(ADSP_MUTE_MAIN, 1);
+				delay_ms(10);
+				gpio_bit_reset(GPIOC, GPIO_PIN_4);
+				gpio_bit_reset(GPIOA, GPIO_PIN_6);
 			}
 			
 			TunerInit();
+			SetFMStereoImprovement(sTuner.Config.bFMSI);
+			
 			setDCFilter(sAudioBasic.dcBlock);
 			setMainVol(sAudioBasic.mainVol);
+			setBalance('L', sAudioBasic.balance[0]);
+			setBalance('R', sAudioBasic.balance[1]);
+			
 			sTuner.Audio.index = 0;
 			SetVolume(sTuner.Audio.nVolume[sTuner.Audio.index]);
 			sTuner.Audio.index = 1;
@@ -1517,14 +1588,21 @@ int main(void)
 
 			initTone(&sAudioTone, false);
 			initGraphicEQ(&sAudioEQ, false);
-
+			
+			if(sTuner.Config.bDemoMode == true)
+			{
+				sAudioKeyFunc.OnOffAUB = true;
+				initUltraBass(sAudioKeyFunc.OnOffAUB);
+				setUltraBassGain(sAudioKeyFunc.AUBGain);
+			}
+			
 			initGraphicSApara(&sAudioGSA);
 			initGraphicSA(sAudioGSA);
 
 			initQPDpara(&sAudioQPD);
 			initQPD(sAudioQPD);
 			
-			setMute(ADSP_MUTE_MAIN, 0);
+			SetMute(sTuner.Audio.bMuted);
 			
 			RDS_Init(&sRDSData);
 			
@@ -1537,8 +1615,8 @@ int main(void)
 // 1mS*INT
 #define TIM_INT_RDS    80
 #define TIM_INT_KEY    10
-#define TIM_INT_LCD    20
-#define TIM_INT_GSA    50
+#define TIM_INT_LCD    55
+#define TIM_INT_GSA    80
 // 100mS*INT
 #define TIM_INT_RFS    5
 #define TIM_INT_ONE    10
@@ -1549,7 +1627,7 @@ void TIM_Callback(uint8_t tim)
 	static uint16_t timer_RDS = TIM_INT_RDS;
 	static uint16_t timer_KEY = TIM_INT_KEY;
 	static uint16_t timer_LCD = TIM_INT_LCD;
-	static uint16_t timer_GSA = TIM_INT_GSA;
+	static uint16_t timer_GSA = TIM_INT_GSA-10;
 	static uint16_t timer_RFS = TIM_INT_RFS;
 	static uint16_t timer_ONE = TIM_INT_ONE;
 	static uint16_t timer_BAT = TIM_INT_BAT;
@@ -1566,7 +1644,7 @@ void TIM_Callback(uint8_t tim)
 				lcode = -1;
 			else
 				lcode = 1;
-			sDisplay.backTimeCounter = sDisplay.backTime*10;
+			reFillBackLightTimer();
 		}
 		lastA1 = nowA1;
 		
@@ -1577,7 +1655,7 @@ void TIM_Callback(uint8_t tim)
 				rcode = -1;
 			else
 				rcode = 1;
-			sDisplay.backTimeCounter = sDisplay.backTime*10;
+			reFillBackLightTimer();
 		}
 		lastA2 = nowA2;
 		
@@ -1609,6 +1687,10 @@ void TIM_Callback(uint8_t tim)
 		}
 		
 		timer_LCD--;
+		if(timer_LCD == 5)
+		{
+			bFlagGSA = 1;
+		}
 		if(timer_LCD == 0)
 		{
 			timer_LCD = TIM_INT_LCD;
@@ -1624,14 +1706,12 @@ void TIM_Callback(uint8_t tim)
 			bFlagRDS = 1;
 		}
 		
-		timer_GSA--;
-		if(timer_GSA == 0)
-		{
-			timer_GSA = TIM_INT_GSA;
-			bFlagGSA = 1;
-		}
-		
-		
+//		timer_GSA--;
+//		if(timer_GSA == 0)
+//		{
+//			timer_GSA = TIM_INT_GSA;
+//			bFlagGSA = 1;
+//		}
 		
 		timer_interrupt_flag_clear(TIMER5, TIMER_INT_FLAG_UP);
 	}
@@ -1699,7 +1779,7 @@ void KEY_Handler(uint8_t key, uint8_t state)
 		
 		case 1:{  // confirm
 			// refresh back light timer
-			sDisplay.backTimeCounter = sDisplay.backTime*10;
+			reFillBackLightTimer();
 			
 			if(state == 0)
 				key_count[key]++;

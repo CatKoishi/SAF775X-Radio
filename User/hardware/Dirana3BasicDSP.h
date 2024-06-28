@@ -176,6 +176,28 @@ struct filterSystem
 #define ADSP_Filter_Peak     7
 
 
+
+struct keyFunc
+{
+	// AUB
+	bool OnOffAUB;
+	float AUBGain;
+	
+	// ALE
+	bool OnOffALE;
+	
+	bool OnOffLEV;
+	float LEVSmoothTime;
+	float LEVReleaseTime;
+	float LEVExpanderThres;
+	
+	bool OnOffAEQ;
+	float AEQReferSpectrum[3];
+	float AEQSpectrumOffset[3];
+};
+
+
+
 void initBasicControl(struct basicControl* init, bool initPara);
 void setMainVol(float VoldB);
 int8_t setBalance(char channel, float att);
@@ -216,6 +238,10 @@ uint32_t getQPDPeak(void);
 float getQPDPeakdB(void);
 uint32_t getQPDAverPeak(void);
 float getQPDAverPeakdB(void);
+
+void initKeyFuncPara(struct keyFunc* para);
+void initUltraBass(bool onoff);
+void setUltraBassGain(float gain);
 
 #endif
 

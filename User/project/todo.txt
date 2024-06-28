@@ -1,3 +1,11 @@
+测量结果
+// 6.56ms / update
+// 每次同步LCD显存需要6.56ms，最大同步速率150FPS (PSC = 8, F = 7.5MHz)
+// 每30/1000秒同步一次时，总线利用率(1-78.14%)
+
+// UI_Main(true); 需要5.37ms渲染
+
+
 Radio DSP [SoftMute, StereoBlend, HighCut, FMSI]
 
 Audio DSP [Filter]
@@ -30,13 +38,13 @@ T O D O :
 
 3.音频正弦波/噪声发生器UI
 
-4.音频ALE，UltraBass驱动与UI
+4.音频ALE，UltraBass驱动与UI--------Half OK
 
 5.音频滤波器组驱动与UI
 
-**6.ATS页面设计--------OK
+6.ATS页面设计--------OK
 
-**7.存台与跳台--------OK
+7.存台与跳台--------OK
 
 8.当前频率、音量保存
 
@@ -56,6 +64,8 @@ T O D O :
 
 16.滚动条数字修复--------OK
 
-17.BandWidth设置反显
+17.BandWidth设置反显--------OK
 
 18.针对AM噪声的pEQ
+
+19.利用通用滤波器，延迟线的伪立体声

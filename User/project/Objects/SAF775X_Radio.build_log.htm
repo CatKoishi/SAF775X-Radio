@@ -1,0 +1,56 @@
+<html>
+<body>
+<pre>
+<h1>礦ision Build Log</h1>
+<h2>Tool Versions:</h2>
+IDE-Version: μVision V5.38.0.0
+Copyright (C) 2022 ARM Ltd and ARM Germany GmbH. All rights reserved.
+License Information: Komeiji Koishi, UESTC, LIC=CZLZX-HSJVZ-TGD7T-RRY6D-5ZIPZ-IIWW3
+ 
+Tool Versions:
+Toolchain:       MDK-ARM Plus  Version: 5.38.0.0
+Toolchain Path:  D:\Arm\Keil_v5\ARM\ARMCLANG\Bin
+C Compiler:      ArmClang.exe V6.19
+Assembler:       Armasm.exe V6.19
+Linker/Locator:  ArmLink.exe V6.19
+Library Manager: ArmAr.exe V6.19
+Hex Converter:   FromElf.exe V6.19
+CPU DLL:         SARMCM3.DLL V5.38.0.0
+Dialog DLL:      DCM.DLL V1.17.5.0
+Target DLL:      CMSIS_AGDI.dll V1.33.15.0
+Dialog DLL:      TCM.DLL V1.56.4.0
+ 
+<h2>Project:</h2>
+E:\workspace\GD32\SAF775X_Radio\User\project\SAF775X_Radio.uvprojx
+Project File Date:  12/26/2023
+
+<h2>Output:</h2>
+*** Using Compiler 'V6.19', folder: 'D:\Arm\Keil_v5\ARM\ARMCLANG\Bin'
+Build target 'Target 1'
+compiling systick.c...
+compiling Dirana3BasicDSP.c...
+linking...
+Program Size: Code=68684 RO-data=24356 RW-data=152 ZI-data=11856  
+FromELF: creating hex file...
+After Build - User command #1: .\moveHex.bat
+E:\workspace\GD32\SAF775X_Radio\User\project>copy .\Objects\*.hex ..\..\ 
+.\Objects\SAF775X_Radio.hex
+已复制         1 个文件。
+After Build - User command #2: fromelf.exe --bin -o  ..\..\SAF775X_Radio.bin .\Objects\*.axf
+".\Objects\SAF775X_Radio.axf" - 0 Error(s), 0 Warning(s).
+
+<h2>Software Packages used:</h2>
+
+Package Vendor: GigaDevice
+                http://gd32mcu.com/data/documents/pack/GigaDevice.GD32F30x_DFP.2.2.0.pack
+                GigaDevice.GD32F30x_DFP.2.2.0
+                GigaDevice GD32F30x Series Device Support and Examples
+
+<h2>Collection of Component include folders:</h2>
+  D:/Arm/Packs/GigaDevice/GD32F30x_DFP/2.2.0/Device/Include
+
+<h2>Collection of Component Files used:</h2>
+Build Time Elapsed:  00:00:03
+</pre>
+</body>
+</html>

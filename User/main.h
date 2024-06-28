@@ -45,7 +45,7 @@ OF SUCH DAMAGE.
 
 #define MENU_MAIN_INDEX    6
 #define MENU_DISP_INDEX    6
-#define MENU_AUDIO_INDEX    7
+#define MENU_AUDIO_INDEX    8
 #define MENU_RADIO_INDEX    12
 #define MENU_ATS_INDEX    6
 #define MENU_DEVICE_INDEX    5
@@ -55,7 +55,7 @@ OF SUCH DAMAGE.
 #define FLASH_DISP    2
 #define FLASH_AUDIO    3
 
-//    PAGE    0       1       2     3-7      8          9          10      11
+//    PAGE    0       1       2     3-8      9          10          11      12
 // CONTENT DEVICE | RADIO | DISP | AUDIO | CH_FM | CH_LW+CH_NUM | CH_MW | CH_SW
 
 
@@ -72,7 +72,7 @@ struct time
 
 struct info
 {
-	uint32_t pid[3]; // master | subversion | date
+	uint32_t pid[4]; // flashID | master | subversion | date
 	uint32_t uid[3]; // 96bit
 	uint32_t tid;
 };

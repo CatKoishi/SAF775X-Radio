@@ -52,7 +52,7 @@ void systick_config(void)
     /* systick clock source is from HCLK/8 */
     systick_clksource_set(SYSTICK_CLKSOURCE_HCLK_DIV8);
 	  
-    count_1us = (float)rcu_clock_freq_get(CK_AHB)/8000000;
+    count_1us = (float)rcu_clock_freq_get(CK_AHB)/8000000;  // 120MH -> (cnt=15)
     count_1ms = (float)count_1us * 1000;
 }
 
@@ -82,7 +82,7 @@ void delay_us(uint32_t count)
     SysTick->VAL = 0x0000U;
 }
 
-//1.2s max
+// 1.2s max
 /*!
     \brief      delay a time in milliseconds in polling mode
     \param[in]  count: count in milliseconds

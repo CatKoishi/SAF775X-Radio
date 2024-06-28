@@ -10,7 +10,7 @@
 /*************************************EXTERN***********************************/
 
 extern struct Dirana3Radio sTuner;
-extern uint8_t nGsaVal[11];
+extern uint8_t nGsaVal[10];
 extern uint32_t nQPeakDet;
 
 extern struct displayConfig sDisplay;
@@ -19,6 +19,7 @@ extern struct basicControl sAudioBasic;
 extern struct toneControl sAudioTone;
 extern struct graphicEQ sAudioEQ;
 extern struct filterSystem sAudioFilter;
+extern struct keyFunc sAudioKeyFunc;
 
 extern struct device sDevice;
 
@@ -48,14 +49,15 @@ const char menuDetail[6][41] = {
 };
 
 // Audio
-const char audioTitle[7][11] = {
+const char audioTitle[8][11] = {
 	{"Vol & Bal"},
 	{"DC Block"},
 	{"Equalizer"},
 	{"Tone"},
 	{"Wave Gen"},
 	{"Filter"},
-	{"abc"},
+	{"AutoLE"},
+	{"UltraBass"},
 };
 
 const char EQTitle[9][4] = {
@@ -350,7 +352,8 @@ void UI_DrawVU(uint32_t val)
 		GUI_FillBuff(196+2+2,80+2+2,percent,10,COLOR_DARK);
 		GUI_FillBuff(196+2+2+percent,80+2+2,50-percent,10,COLOR_WHITE);
 	}
-	
+	if(max_vol > 0)
+		max_vol = max_vol - 1;
 }
 
 void UI_DrawEqBand(int8_t band, int8_t sel)
@@ -420,7 +423,7 @@ void GUI_SeekALL(uint16_t fmin, uint16_t fmax, uint16_t fnow, uint8_t number, bo
 	if(force == true)
 	{
 		vnumber = 100;
-		GUI_FillBuff(33,51,160,19,COLOR_WHITE);
+		GUI_FillBuff(33,51,159,19,COLOR_WHITE);
 		GUI_FillBuff(231,54,21,12,COLOR_WHITE);
 	}
 	
@@ -450,6 +453,7 @@ void UI_Main(bool init)
 	static uint16_t	vfreq 		= 0;
 	static uint8_t	vstep 		= 0;
 	static uint8_t	vfilter		= 0;
+	static bool     vfiltsel  = 0;
 	static uint8_t	vband 		= 0;
 	static bool 		vstereo 	= 0;
 	static int8_t		vrssi 		= 0;
@@ -517,13 +521,14 @@ void UI_Main(bool init)
 	}
 	
 	// filter
-	if(vfilter != sTuner.Config.nBandFilter[sTuner.Radio.nRFMode] || init)
+	if(vfilter != sTuner.Config.nBandFilter[sTuner.Radio.nRFMode] || vfiltsel != bFilterSel || init)
 	{
 		vfilter = sTuner.Config.nBandFilter[sTuner.Radio.nRFMode];
+		vfiltsel = bFilterSel;
 		if(sTuner.Radio.nRFMode == RFMODE_FM)
-			GUI_DrawBuff_Dot(2,24+14,34,8,MODE_GREY,-1,-1,img_filter_fm+68*vfilter);
+			GUI_DrawBuff_Dot(2,24+14,34,8,MODE_MONO,COLOR_BLACK,vfiltsel? COLOR_LIGHT:COLOR_WHITE,img_filter_fm+34*vfilter);
 		else
-			GUI_DrawBuff_Dot(2,24+14,34,8,MODE_GREY,-1,-1,img_filter_am+68*vfilter);
+			GUI_DrawBuff_Dot(2,24+14,34,8,MODE_MONO,COLOR_BLACK,vfiltsel? COLOR_LIGHT:COLOR_WHITE,img_filter_am+34*vfilter);
 	}
 	
 	if(vband != sTuner.Radio.nBandMode || init)
@@ -679,7 +684,7 @@ void UI_Menu(int8_t index, bool init)
 		case 2 :GUI_DrawBuff_Dot(12, 23, 50, 50, MODE_GREY, 0, 0, img_mUntitled50x);break;
 		case 3 :GUI_DrawBuff_Dot(12, 23, 50, 50, MODE_GREY, 0, 0, img_mUntitled50x);break;
 		case 4 :GUI_DrawBuff_Dot(12, 23, 50, 50, MODE_GREY, 0, 0, img_mUntitled50x);break;
-		case 5 :GUI_DrawBuff_Dot(12, 23, 50, 50, MODE_GREY, 0, 0, img_mUntitled50x);break;
+		case 5 :GUI_DrawBuff_Dot(12, 23, 50, 50, MODE_GREY, 0, 0, img_mAbout50x);break;
 		default :   break;
 	}
 	
@@ -839,8 +844,15 @@ void UI_Audio(int8_t index, int8_t band, int8_t sel, bool init)
 				
 			};break;
 			
-			case 6:{ // 
+			case 6:{ // ALE
 				
+			};break;
+			
+			case 7:{ // Ultra Bass
+				GUI_DrawBuff_Dot(8,24+2,44,44,MODE_GREY,0,0,img_ultraBass44x44);
+				GUI_Text(8+44+8, 24+2, 256,24+2+20,"Adaptive UltraBass",&Font20,COLOR_BLACK,COLOR_WHITE);
+				GUI_Text(8+44+8, 48+2, 256,48+2+20,"[0 ~ 24] 1dB/div",&Font20,COLOR_BLACK,COLOR_WHITE);
+				GUI_Text(8,72+2,256,72+2+20,"Gain:",&Font20,COLOR_BLACK,COLOR_WHITE);
 			};break;
 		}
 	}
@@ -875,8 +887,12 @@ void UI_Audio(int8_t index, int8_t band, int8_t sel, bool init)
 			
 		};break;
 		
-		case 6:{ // UltraBass & ALE
+		case 6:{ // ALE
 			
+		};break;
+		
+		case 7:{ // UltraBass
+			UI_DrawFloat(72,sAudioKeyFunc.AUBGain,1,"dB");
 		};break;
 	}
 }
@@ -1043,10 +1059,10 @@ void UI_Device(int8_t index, bool init)
 			GUI_Number(8+14+14,60,(uint16_t)(sDevice.sInfo.tid&0xFFFF),ALIGNMENT_LEFT,&Font12,COLOR_BLACK,COLOR_WHITE);
 			
 			// Firmware ID
-			GUI_Number(8,84,sDevice.sInfo.pid[0],ALIGNMENT_LEFT,&Font12,COLOR_BLACK,COLOR_WHITE);
+			GUI_Number(8,84,sDevice.sInfo.pid[1],ALIGNMENT_LEFT,&Font12,COLOR_BLACK,COLOR_WHITE);
 			GUI_Char(15,84,'.',&Font12,COLOR_BLACK,COLOR_WHITE);
-			GUI_Number(22,84,sDevice.sInfo.pid[1],ALIGNMENT_LEFT,&Font12,COLOR_BLACK,COLOR_WHITE);
-			GUI_Number(60,84,sDevice.sInfo.pid[2],ALIGNMENT_LEFT,&Font12,COLOR_BLACK,COLOR_WHITE);
+			GUI_Number(22,84,sDevice.sInfo.pid[2],ALIGNMENT_LEFT,&Font12,COLOR_BLACK,COLOR_WHITE);
+			GUI_Number(60,84,sDevice.sInfo.pid[3],ALIGNMENT_LEFT,&Font12,COLOR_BLACK,COLOR_WHITE);
 		}
 	}
 	

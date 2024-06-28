@@ -1,0 +1,1 @@
+copy .\Objects\*.hex ..\..\

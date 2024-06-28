@@ -77,7 +77,7 @@ void DispShutDown(void);
 
 void lcd_dma_init(void);
 void lcd_dma_callback(void);
-void lcd_update(void);
+void lcd_update(int16_t xs, int16_t ys, uint16_t lx, uint16_t ly);
 
 
 

@@ -30,6 +30,7 @@ const uint8_t color_page[4] = {
 /****************************************************************/
 
 static uint8_t LCD_Buff[LCD_DRV_PAGE_MAX][LCD_DRV_MAX_X] = {0};
+static uint8_t LCD_Buff_CPY[LCD_DRV_PAGE_MAX*LCD_DRV_MAX_X] = {0};
 
 static uint8_t dma_trans_flag = 0;
 
@@ -150,18 +151,49 @@ void lcd_dma_init(void)
 	
 }
 
-void lcd_update(void)
+void lcd_update(int16_t xs, int16_t ys, uint16_t lx, uint16_t ly)
 {
 	if(dma_trans_flag == 1)
 		return;
-	lcd_set_cursor(0,0);
-	lcd_write_cmd(0x5c, 0);
 	
-	dma_channel_disable(DMA0, DMA_CH4);
-	dma_transfer_number_config(DMA0, DMA_CH4, LCD_DRV_PAGE_MAX*LCD_DRV_MAX_X);
-	dma_memory_address_config(DMA0, DMA_CH4, (uint32_t)LCD_Buff);
-	dma_channel_enable(DMA0, DMA_CH4);
-	
+	if(xs < 0 || ys < 0)  // regular full screen update
+	{
+		lcd_set_cursor(0, 0);
+		lcd_write_cmd(0x5c, 0);
+		
+		dma_channel_disable(DMA0, DMA_CH4);
+		dma_transfer_number_config(DMA0, DMA_CH4, LCD_DRV_PAGE_MAX*LCD_DRV_MAX_X);
+		dma_memory_address_config(DMA0, DMA_CH4, (uint32_t)LCD_Buff);
+		dma_channel_enable(DMA0, DMA_CH4);
+	}
+	else  // part update
+	{
+		int16_t pgs, pge, lpg;
+		int16_t i, j, k;
+		
+		pgs = ys/4;
+		pge = (ys+ly-1)/4;
+		lpg = pge-pgs+1;
+		
+		// memory copy
+		k = 0;
+		for(i = pgs; i <= pge; i++)
+		{
+			for(j = xs; j <= xs+lx-1; j++)
+			{
+				LCD_Buff_CPY[k] = LCD_Buff[i][j];
+				k++;
+			}
+		}
+		
+		lcd_set_window(xs, pgs, lx, lpg);
+		lcd_write_cmd(0x5c, 0);
+		
+		dma_channel_disable(DMA0, DMA_CH4);
+		dma_transfer_number_config(DMA0, DMA_CH4, lpg*lx);
+		dma_memory_address_config(DMA0, DMA_CH4, (uint32_t)LCD_Buff_CPY);
+		dma_channel_enable(DMA0, DMA_CH4);
+	}
 	CS_PIN_LOW;
 	DC_PIN_HIGH;
 	spi_dma_enable(SPI1, SPI_DMA_TRANSMIT);
@@ -787,9 +819,9 @@ void LCD_SPI_Init(void)
 	
 	//PB12, 14 -> LCD_CS, DC
 	GPIO_BOP(GPIOB) = GPIO_PIN_12 | GPIO_PIN_14;
-	gpio_init(GPIOB, GPIO_MODE_OUT_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_12 | GPIO_PIN_14);
+	gpio_init(GPIOB, GPIO_MODE_OUT_PP, GPIO_OSPEED_2MHZ, GPIO_PIN_12 | GPIO_PIN_14);
 	//PB13,15 -> SPI1_SCK,SDA
-	gpio_init(GPIOB, GPIO_MODE_AF_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_13 | GPIO_PIN_15);
+	gpio_init(GPIOB, GPIO_MODE_AF_PP, GPIO_OSPEED_2MHZ, GPIO_PIN_13 | GPIO_PIN_15);
 	
 	spi_parameter_struct sspi;
 	/* deinitilize SPI and the parameters */
@@ -802,7 +834,7 @@ void LCD_SPI_Init(void)
 	sspi.frame_size           = SPI_FRAMESIZE_8BIT;
 	sspi.clock_polarity_phase = SPI_CK_PL_HIGH_PH_2EDGE;
 	sspi.nss                  = SPI_NSS_SOFT;
-	sspi.prescale             = SPI_PSC_8;  //F = 60MHz(APB1) / 8(PSC) = 7.5MHz (Max = 12.5MHz)
+	sspi.prescale             = SPI_PSC_32;  //F = 60MHz(APB1) / 8(PSC) = 7.5MHz (Max = 12.5MHz)
 	sspi.endian               = SPI_ENDIAN_MSB;
 	spi_init(SPI1, &sspi);
 	
@@ -819,7 +851,7 @@ void LCD_StructInit(struct displayConfig* init, bool initPara)
 		init->backTime = 5;
 		init->backTimeCounter = init->backTime*10;
 		init->brightness = 20;
-		init->contrast = 260;
+		init->contrast = 265;
 		init->greyLevel[0] = 16;
 		init->greyLevel[1] = 20;
 		init->invDisp = false;

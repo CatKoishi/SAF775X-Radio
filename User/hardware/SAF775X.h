@@ -185,14 +185,15 @@ void SetRadioDSP(void);
 void SetFMiMultipathSuppression(bool on);
 void SetFMClickNoiseSuppression(bool on);
 void SetFMChannelEqualizer(bool on);
-void SetNoiseBlanker(uint8_t rfmode, uint8_t sens);
-void SetNoiseBlankerB(uint8_t sens);
+void SetNoiseBlanker(uint8_t rfmode, uint8_t sensIF, uint8_t sensAu);
 
 void SetRadioSignal(void);
 void SetFMStereoImprovement(bool on);
 void SetFMDeemphasis(uint8_t tao);
 void SetAMFixedHP(uint8_t hp);
 void SetAMFixedLP(uint8_t lp);
+
+void SetSoftMute(uint8_t level);
 
 
 void SwitchBand(uint8_t band);

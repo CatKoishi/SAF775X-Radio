@@ -7,10 +7,8 @@
 #include "Dirana3_ABB_E7A1.h"
 #include "Dirana3BasicDSP.h"
 
-
 #define WORD_LOW_BYTE(a)     ((unsigned char)(a & 0x00FF))
 #define WORD_HIGH_BYTE(a)    ((unsigned char)(a >> 8))
-	
 /************************************************************************************************************************************/
 
 struct Dirana3Radio *sys;
@@ -203,6 +201,7 @@ const uint8_t DSP_INIT[] =
 	3,0xA9,0x32,0x00,                // Front DAC on
 	3,0xA9,0x33,0x00,                // Rear DAC on
 	6,0xF3,0x03,0x82,0x80,0x00,0x00, // Switch On Sample Rate Converter 0,Primary Channel
+	2,0x08,0x09,                     // Set 773X liked AACD Detection
 	0
 };
 
@@ -264,7 +263,7 @@ void Set_ADSP(uint32_t subaddr, uint32_t data)
 	I2C_WriteByte((uint8_t)(subaddr >> 8));
 	I2C_WriteByte((uint8_t)subaddr);
 	
-	if(subaddr&0x4000)	// YMEM
+	if(subaddr&0x004000)	// YMEM
 	{
 		I2C_WriteByte((uint8_t)(data >> 8));
 		I2C_WriteByte((uint8_t)data);
@@ -434,8 +433,8 @@ void GetRDS(struct RDSBuffer* rds)
 	Get_REG(0x07, sts, 1);
 	
 	rds->status  = sts[0];
-	//BIT   7     6     5      4      3  2  1     0
-	//FUNC  RDAV  DOFL  SDATA  TBGRP  /  /  SYNC  /
+	//BIT  |  7   |  6   |   5   |   4   | 3 | 2 |  1   | 0 |
+	//FUNC | RDAV | DOFL | SDATA | TBGRP | / | / | SYNC | / |
 	if( ((rds->status & 0x80) != 0) && ((rds->status & 0x20) == 0) )
 	{
 		Get_REG(0x07, sts, 10);
@@ -457,25 +456,26 @@ void GetRDS(struct RDSBuffer* rds)
  */
 void SetVolume(uint8_t percent)
 {
-	float tmp;
+	float VoldB;
 	if(percent > MAX_VOL)
 		return;
 	sys->Audio.nVolume[sys->Audio.index] = percent;
+	if(percent < 4)
+		VoldB = -67 + 4*percent;
+	else
+		VoldB = (-0.53125)*(100-percent);
 	if(sys->Audio.index == 0)  // headphone
 	{
-		setFader('F', 0.67*(100-percent));
+		setFader('F', VoldB);
 	}
 	else  // speaker
 	{
-		tmp = percent/100.0-1.0;
-		setFader('R', -67.0*tmp*tmp*tmp);
+		setFader('R', VoldB);
 	}
 }
 
 void SetMute(bool mute)
 {
-	if(mute == sys->Audio.bMuted)
-		return;
 	sys->Audio.bMuted = mute;
 	
 	if(sys->Audio.bMuted == true)
@@ -632,19 +632,12 @@ void SetFMChannelEqualizer(bool on)
 	SetRadioDSP();
 }
 
-void SetNoiseBlanker(uint8_t rfmode, uint8_t sens)
+void SetNoiseBlanker(uint8_t rfmode, uint8_t sensIF, uint8_t sensAu)
 {
-	if(sens >= 4)
+	if(sensIF >= 4 || sensAu >= 4)
 		return;
-	sys->Config.nNBSA[rfmode] = sens;
-	SetRadioDSP();
-}
-
-void SetNoiseBlankerB(uint8_t sens)
-{
-	if(sens >= 4)
-		return;
-	sys->Config.nNBSB = sens;
+	sys->Config.nNBSA[rfmode] = sensIF;
+	sys->Config.nNBSB = sensAu;
 	SetRadioDSP();
 }
 
@@ -674,6 +667,20 @@ void SetFMStereoImprovement(bool on)
 	if(sys->Config.bDemoMode == false)
 		return;
 	sys->Config.bFMSI = on;
+	if(on == true)
+	{
+		Set_REGFree(2,0x19,0);
+		Set_REGFree(2,0x79,0);
+		Set_REGFree(2,0x1D,0);
+		Set_REGFree(2,0x7D,0);
+	}
+	else
+	{
+		Set_REGFree(2,0x19,0x3F);
+		Set_REGFree(2,0x79,0x3F);
+		Set_REGFree(2,0x1D,0x3F);
+		Set_REGFree(2,0x7D,0x3F);
+	}
 	SetRadioSignal();
 }
 
@@ -709,12 +716,46 @@ void SetRadioAutoBW(uint8_t sens, uint8_t lev)
 
 /**************/
 
+void SetSoftMute(uint8_t level)
+{
+	// addr time func rssi usn/mph attenuation
+	// 0x0D,0x65,0x10,0x3A,0x33,0x0C | default value
+	if(sys->Radio.nRFMode == RFMODE_FM)
+	{
+		switch(level)
+		{
+			case 0:Set_REGFree(6,0x0D,0x65,0x00,0x3A,0x33,0x0C);break;  // off
+			case 1:Set_REGFree(6,0x0D,0x65,0x10,0x15,0x33,0x0C);break;  // 
+			case 2:Set_REGFree(6,0x0D,0x65,0x10,0x3A,0x33,0x0C);break;  // default value
+			case 3:Set_REGFree(6,0x0D,0x65,0x1E,0x3A,0x33,0x08);break;  // 
+			case 4:Set_REGFree(6,0x0D,0x65,0x2A,0x3A,0x55,0x05);break;  // full control
+		}
+	}
+	else
+	{
+		switch(level)
+		{
+			case 0:Set_REGFree(6,0x0D,0x60,0x00,0x3A,0x33,0x0C);break;  // off
+			case 1:Set_REGFree(6,0x0D,0x60,0x10,0x3A,0x33,0x0C);break;  // 
+			case 2:Set_REGFree(6,0x0D,0x60,0x90,0x3A,0x33,0x0C);break;  // default value
+			case 3:Set_REGFree(6,0x0D,0x60,0xD0,0x49,0x33,0x05);break;  // 
+			case 4:Set_REGFree(6,0x0D,0x60,0xD0,0x4D,0x33,0x04);break;  // full control
+		}
+	}
+}
+
+/**************/
+
+
 void SetFMStereo(uint8_t level)
 {
-	sys->Config.bFMSI = level;
+	sys->Config.nFMST = level;
 	SetRadioSignal();
-	// Stereo Blend
-	// HiBlend
+	switch(level)
+	{
+		
+	}
+	
 }
 
 /**************/
@@ -726,14 +767,16 @@ void SwitchBand(uint8_t band)
 	sys->Radio.nBandMode = band;
 	sys->Radio.nRFMode = nBandRFMode[band];
 	
-	SetMute(true);
+	setMute(ADSP_MUTE_MAIN, 1);
 	TuneFreq(sys->Radio.nBandFreq[sys->Radio.nBandMode], Preset);
 	SetTuner();
 	SetTunerOPT();
 	SetRadioDSP();
 	SetRadioSignal();
-	SetRadioAutoBW(1,1);
-	SetMute(false);
+	SetRadioAutoBW(1,2);
+	SetSoftMute(sys->Config.nSoftMute[sys->Radio.nRFMode]);
+	
+	SetMute(sys->Audio.bMuted);
 }
 
 
@@ -755,15 +798,15 @@ void TunerStructInit(struct Dirana3Radio* init, bool initPara)
 		sys->Config.bFMCNS = 1;
 		sys->Config.bFMCEQ = 1;
 		sys->Config.bFMSI = 1;
-		sys->Config.nNBSA[RFMODE_FM] = 2;
-		sys->Config.nNBSA[RFMODE_AM] = 2;
-		sys->Config.nNBSB = 2;
+		sys->Config.nNBSA[RFMODE_FM] = 1;
+		sys->Config.nNBSA[RFMODE_AM] = 3;
+		 
 		sys->Config.nFMST = 1;
 		sys->Config.nDeemphasis = 1;
 		
 		sys->Config.bAMANTtyp = 0;
 		sys->Config.nAMFixedHP = 1;
-		sys->Config.nAMFixedLP = 0;
+		sys->Config.nAMFixedLP = 1;
 		
 		sys->Radio.nBandMode = BAND_FM;
 		sys->Radio.nRFMode = RFMODE_FM;
@@ -777,8 +820,8 @@ void TunerStructInit(struct Dirana3Radio* init, bool initPara)
 		sys->Radio.nFreqStep[3] = 1;
 		
 		sys->Audio.bMuted = false;
-		sys->Audio.nVolume[0] = 20;
-		sys->Audio.nVolume[1] = 80;
+		sys->Audio.nVolume[0] = 40;
+		sys->Audio.nVolume[1] = 50;
 		sys->Audio.index = 0;
 		
 		sys->ATS.nATSMode = 1;
@@ -799,7 +842,7 @@ void TunerInit(void)
 	SetTunerOPT();
 	SetRadioDSP();
 	SetRadioSignal();
-	SetRadioAutoBW(1,1);
+	SetRadioAutoBW(1,2);
 	
 	TuneFreq(sys->Radio.nBandFreq[sys->Radio.nBandMode], Preset);
 }
