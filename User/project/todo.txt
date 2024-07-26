@@ -5,6 +5,7 @@
 
 // UI_Main(true); 需要5.37ms渲染
 
+shou gan
 
 Radio DSP [SoftMute, StereoBlend, HighCut, FMSI]
 

@@ -51,17 +51,20 @@
 #define RST_PIN_HIGH 	gpio_bit_set(LCD_RST_PORT,LCD_RST_PIN)
 
 struct displayConfig
-{    
+{
   uint8_t brightness;
-	uint8_t greyLevel[2];
-	bool invDisp;
-	uint16_t backTime;
+  uint8_t greyLevel[2];
+  bool invDisp;
+  uint16_t backTime;
   uint16_t contrast;
-	int32_t backTimeCounter;
+  int32_t backTimeCounter;
+  bool emiFree;
 };
 
-void LCD_StructInit(struct displayConfig* init, bool initPara);
-void LCD_Init(struct displayConfig init);
+extern struct displayConfig sDisplay;
+
+void LCD_StructInit(bool initPara);
+void LCD_Init(void);
 void DispFill(uint8_t page ,uint8_t column ,uint16_t x ,uint8_t y ,uint8_t color);
 void DispPic(uint8_t page, uint8_t column, uint16_t x ,uint8_t y ,const unsigned char *dp);
 
@@ -77,16 +80,16 @@ void DispShutDown(void);
 
 void lcd_dma_init(void);
 void lcd_dma_callback(void);
-void lcd_update(int16_t xs, int16_t ys, uint16_t lx, uint16_t ly);
+void lcd_update(void);
 
 
 
 void GUI_ClearBuff(uint8_t color);
-void GUI_DrawDot(uint16_t x, uint8_t y, uint8_t color);
+//void GUI_DrawDot(uint16_t x, uint8_t y, uint8_t color);
 void GUI_FillBuff_Origin(uint16_t xs, uint8_t ys, uint16_t x ,uint8_t y, uint8_t data);
 void GUI_FillBuff(uint16_t xs, uint8_t ys, uint16_t x ,uint8_t y, uint8_t color);
 void GUI_DrawBuff_Origin(uint8_t xs, uint8_t ys, uint16_t x, uint8_t y, const unsigned char *dp);
-void GUI_DrawBuff_Dot(uint16_t xs, uint8_t ys, uint16_t x, uint8_t y, uint8_t pic_type, uint8_t color, uint8_t bcolor, const unsigned char *dp);
+void GUI_DrawBuff(uint16_t xs, uint8_t ys, uint16_t x, uint8_t y, uint8_t pic_type, uint8_t color, uint8_t bcolor, const unsigned char *dp);
 
 void GUI_Char(uint16_t xs, uint8_t ys, char ascii, sFONT* font, uint8_t color, uint8_t bcolor);
 void GUI_Text(uint16_t xs, uint8_t ys, int16_t xe, int16_t ye, const char* text, sFONT* font, uint8_t color, uint8_t bcolor);

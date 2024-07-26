@@ -82,7 +82,7 @@ struct toneControl
 	float trebleGain;
 };
 
-
+//     50 100 200 400 800 1600 3200 6400 12800
 // fc : 47 94 188 375 750 1500 3000 6000 12000
 // gain -12~12dB
 // shapeFactor 0.1~10

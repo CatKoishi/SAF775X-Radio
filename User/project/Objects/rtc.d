@@ -1,5 +1,5 @@
 ./objects/rtc.o: ..\hardware\rtc.c \
-  D:\Arm\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdint.h \
+  D:\Software\Arm\Keil_v5\ARM\ARMCLANG\include\stdint.h \
   ..\..\Firmware\CMSIS\GD\GD32F30x\Include\gd32f30x.h \
   ..\..\Firmware\CMSIS\core_cm4.h ..\..\Firmware\CMSIS\core_cmInstr.h \
   ..\..\Firmware\CMSIS\core_cmFunc.h \

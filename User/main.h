@@ -44,22 +44,24 @@ OF SUCH DAMAGE.
 #include "rds.h"
 
 #define MENU_MAIN_INDEX    6
-#define MENU_DISP_INDEX    6
+#define MENU_DISP_INDEX    7
 #define MENU_AUDIO_INDEX    8
 #define MENU_RADIO_INDEX    12
 #define MENU_ATS_INDEX    6
 #define MENU_DEVICE_INDEX    5
 
-#define FLASH_DEVICE    0
-#define FLASH_RADIO    1
+#define FLASH_DEVICE  0
+#define FLASH_RADIO   1
 #define FLASH_DISP    2
-#define FLASH_AUDIO    3
-
+#define FLASH_AUDIO   3
+#define FLASH_FM      9
+#define FLASH_LW      10
+#define FLASH_MW      11
+#define FLASH_SW      12
 //    PAGE    0       1       2     3-8      9          10          11      12
 // CONTENT DEVICE | RADIO | DISP | AUDIO | CH_FM | CH_LW+CH_NUM | CH_MW | CH_SW
 
-
-struct time
+typedef struct _TIME
 {
 	uint8_t second;
 	uint8_t minute;
@@ -68,7 +70,7 @@ struct time
 	uint8_t month;
 	uint16_t year;
 	uint32_t timestamp;
-};
+}TIME;
 
 struct info
 {
@@ -80,12 +82,13 @@ struct info
 struct device
 {
 	struct info sInfo;
-	struct time sTime;
+	TIME sTime;
 	uint16_t nBatVolt;
 	uint8_t bAutoMono;
 	uint8_t bSoftReboot;
 };
 
+extern struct device sDevice;
 
 void EXTI_Callback(uint8_t exti_line);
 void TIM_Callback(uint8_t tim);

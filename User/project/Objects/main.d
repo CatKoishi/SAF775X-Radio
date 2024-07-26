@@ -1,8 +1,8 @@
-./objects/main.o: ..\main.c ..\..\User\main.h \
-  D:\Arm\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdbool.h \
+./objects/main.o: ..\main.c ..\main.h \
+  D:\Software\Arm\Keil_v5\ARM\ARMCLANG\include\stdbool.h \
   ..\..\Firmware\CMSIS\GD\GD32F30x\Include\gd32f30x.h \
   ..\..\Firmware\CMSIS\core_cm4.h \
-  D:\Arm\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdint.h \
+  D:\Software\Arm\Keil_v5\ARM\ARMCLANG\include\stdint.h \
   ..\..\Firmware\CMSIS\core_cmInstr.h ..\..\Firmware\CMSIS\core_cmFunc.h \
   ..\..\Firmware\CMSIS\core_cm4_simd.h \
   ..\..\Firmware\CMSIS\GD\GD32F30x\Include\system_gd32f30x.h \
@@ -31,9 +31,9 @@
   ..\..\Firmware\GD32F30x_standard_peripheral\Include\gd32f30x_misc.h \
   ..\..\Firmware\GD32F30x_standard_peripheral\Include\gd32f30x_enet.h \
   ..\..\Firmware\GD32F30x_standard_peripheral\Include\gd32f30x_exmc.h \
-  ..\hardware\rds.h ..\..\User\systick.h \
-  D:\Arm\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdio.h \
-  D:\Arm\Keil_v5\ARM\ARMCLANG\Bin\..\include\math.h ..\..\User\init.h \
-  ..\hardware\SAF775X.h ..\hardware\lcd.h ..\hardware\font.h \
-  ..\..\User\ui.h ..\hardware\flash\flash.h ..\..\User\func.h \
+  ..\hardware\rds.h ..\systick.h \
+  D:\Software\Arm\Keil_v5\ARM\ARMCLANG\include\stdio.h \
+  D:\Software\Arm\Keil_v5\ARM\ARMCLANG\include\math.h ..\init.h \
+  ..\hardware\SAF775X.h ..\..\User\main.h ..\hardware\lcd.h \
+  ..\hardware\font.h ..\ui.h ..\hardware\flash\flash.h ..\func.h \
   ..\hardware\rtc.h ..\hardware\Dirana3BasicDSP.h

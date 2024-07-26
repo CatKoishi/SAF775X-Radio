@@ -3,7 +3,7 @@
   ..\..\Firmware\GD32F30x_standard_peripheral\Include\gd32f30x_spi.h \
   ..\..\Firmware\CMSIS\GD\GD32F30x\Include\gd32f30x.h \
   ..\..\Firmware\CMSIS\core_cm4.h \
-  D:\Arm\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdint.h \
+  D:\Software\Arm\Keil_v5\ARM\ARMCLANG\include\stdint.h \
   ..\..\Firmware\CMSIS\core_cmInstr.h ..\..\Firmware\CMSIS\core_cmFunc.h \
   ..\..\Firmware\CMSIS\core_cm4_simd.h \
   ..\..\Firmware\CMSIS\GD\GD32F30x\Include\system_gd32f30x.h \
