@@ -84,11 +84,14 @@ struct device
 	struct info sInfo;
 	TIME sTime;
 	uint16_t nBatVolt;
+  int8_t nIntTemp;
 	uint8_t bAutoMono;
 	uint8_t bSoftReboot;
 };
 
 extern struct device sDevice;
+extern uint8_t nBandChNum[];
+extern struct RDSData sRDSData;
 
 void EXTI_Callback(uint8_t exti_line);
 void TIM_Callback(uint8_t tim);

@@ -15,7 +15,7 @@ void SYS_Init(void)
 	rcu_periph_clock_enable(RCU_TIMER5);
 	rcu_periph_clock_enable(RCU_TIMER6);
 	rcu_periph_clock_enable(RCU_ADC0);
-	rcu_adc_clock_config(RCU_CKADC_CKAPB2_DIV4);
+	rcu_adc_clock_config(RCU_CKADC_CKAPB2_DIV16);  // APB2 120MH/16 = 7.5MH
 	rcu_periph_clock_enable(RCU_DAC);
 	//rcu_periph_clock_enable(RCU_I2C0);
 	//rcu_periph_clock_enable(RCU_I2C1);
@@ -131,14 +131,16 @@ void ADC_Init(void)
 	adc_special_function_config(ADC0, ADC_SCAN_MODE, ENABLE);
 	adc_data_alignment_config(ADC0, ADC_DATAALIGN_RIGHT);
 	
+  //Totol time = (1.5+SAMPLETIME)/Fadc(MHz) us
 	adc_channel_length_config(ADC0, ADC_REGULAR_CHANNEL,1U);
-	adc_regular_channel_config(ADC0, 0, ADC_CHANNEL_2, ADC_SAMPLETIME_55POINT5);
+	adc_regular_channel_config(ADC0, 0, ADC_CHANNEL_2, ADC_SAMPLETIME_71POINT5);
 	adc_external_trigger_source_config(ADC0, ADC_REGULAR_CHANNEL, ADC0_1_2_EXTTRIG_REGULAR_NONE);
 	adc_external_trigger_config(ADC0, ADC_REGULAR_CHANNEL, ENABLE);
 	
 	// GD32F303 Injection mode not found
-	adc_channel_length_config(ADC0, ADC_INSERTED_CHANNEL, 1U);
+	adc_channel_length_config(ADC0, ADC_INSERTED_CHANNEL, 2U);
 	adc_inserted_channel_config(ADC0, 0, ADC_CHANNEL_12, ADC_SAMPLETIME_239POINT5);
+  adc_inserted_channel_config(ADC0, 1, ADC_CHANNEL_16, ADC_SAMPLETIME_239POINT5);
 	adc_external_trigger_source_config(ADC0, ADC_INSERTED_CHANNEL, ADC0_1_2_EXTTRIG_INSERTED_NONE);
 	adc_external_trigger_config(ADC0, ADC_INSERTED_CHANNEL, ENABLE);
 	
@@ -151,7 +153,8 @@ void ADC_Init(void)
 	adc_enable(ADC0);
 	delay_ms(5);
 	adc_calibration_enable(ADC0);
-	
+  
+  adc_tempsensor_vrefint_enable();
 }
 
 

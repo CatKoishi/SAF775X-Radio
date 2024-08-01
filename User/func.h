@@ -29,8 +29,10 @@
 float inRangeFloat(float min, float max, float num);
 int32_t inRangeInt(int32_t min, int32_t max, int32_t num);
 int32_t inRangeLoop(int32_t min, int32_t max, int32_t num, int32_t dir);
-uint32_t myabs(int32_t number);
+bool checkRange(int min, int max, int num);
 
+uint32_t myabs(int32_t number);
+int myround(float num);
 
 void DAC_Start(uint8_t ch);
 void DAC_Stop(uint8_t ch);

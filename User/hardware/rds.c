@@ -61,7 +61,7 @@ uint16_t FindMin(uint8_t *str, uint16_t lengh)
 	return min;
 }
 
-void CopyStr(unsigned char* des, const unsigned char* source)
+static void CopyStr(unsigned char* des, const unsigned char* source)
 {
 	unsigned char* r = des;
   while(*source != '\0')
@@ -71,7 +71,7 @@ void CopyStr(unsigned char* des, const unsigned char* source)
 	*r = '\0';
 }
 
-void FillStr(unsigned char* str, uint16_t length, unsigned char ch)
+static void FillStr(unsigned char* str, uint16_t length, unsigned char ch)
 {
 	uint16_t i = 0;
 	for(i=0;i<length-1;i++)
@@ -87,17 +87,17 @@ void FillStr(unsigned char* str, uint16_t length, unsigned char ch)
  * 2:large error
  * 3:uncorrectable error
  */
-uint8_t CheckError(struct RDSBuffer *rawdata, uint8_t block)
+static uint8_t CheckError(struct RDSBuffer *rawdata, uint8_t block)
 {
 	return ( (rawdata->error >> block) & 0x03 );
 }
 
-uint8_t CheckVersionType(struct RDSBuffer *rawdata)
+static uint8_t CheckVersionType(struct RDSBuffer *rawdata)
 {
 	return ( (rawdata->status >> 4) & 0x01 );
 }
 
-uint8_t CheckGroupType(struct RDSBuffer *rawdata)
+static uint8_t CheckGroupType(struct RDSBuffer *rawdata)
 {
 	return ( (rawdata->block_B >> 12) & 0x000F );
 }
@@ -125,12 +125,11 @@ void RDS_Refresh(void)
 	FillStr(rds->PTY, 9, ' ');
 	FillStr(rds->PS, 8, ' ');
 	rds->PS[8] = 0;
-	
-	//FillStr(rds->RT, 64, ' ');
-	//rds->RT[64] = 0;
+	FillStr(rds->RT, 64, ' ');
+	rds->RT[64] = 0;
 	//rds->Hour = 0;
 	//rds->Minute = 0;
-	//rds->RDSFlag = 0;
+	rds->RDSFlag = 0;
 }
 
 uint16_t ReadPI(struct RDSBuffer *rawdata)

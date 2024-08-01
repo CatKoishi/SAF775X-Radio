@@ -33,5 +33,5 @@
   ..\..\Firmware\GD32F30x_standard_peripheral\Include\gd32f30x_enet.h \
   ..\..\Firmware\GD32F30x_standard_peripheral\Include\gd32f30x_exmc.h \
   ..\hardware\rds.h ..\hardware\lcd.h ..\hardware\font.h \
-  ..\hardware\pic.h ..\hardware\Dirana3BasicDSP.h \
+  ..\hardware\pic.h ..\hardware\Dirana3BasicDSP.h ..\func.h ..\main.h \
   D:\Software\Arm\Keil_v5\ARM\ARMCLANG\include\math.h

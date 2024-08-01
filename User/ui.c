@@ -5,6 +5,7 @@
 #include "SAF775X.h"
 #include "Dirana3BasicDSP.h"
 #include "font.h"
+#include "func.h"
 #include <math.h>
 
 /*************************************EXTERN***********************************/
@@ -156,19 +157,6 @@ void stroffset(uint8_t* str, uint8_t length)
     str[i] += 48;
   }
 }
-
-uint8_t myround(uint16_t number)
-{
-  uint8_t mantissa, temp;
-  mantissa = number%10;
-  temp = number/10;
-  if(mantissa>=5)
-    return temp + 1;
-  else
-    return temp;
-}
-
-
 
 
 void UI_DrawScrollBar(uint8_t totalNum, uint8_t nowPos)
@@ -458,18 +446,23 @@ void UI_Main(bool init)
   static bool      vstereo   = 0;
   static int8_t    vrssi     = 0;
   
+  static int8_t    vtemp     = 0;
   static uint16_t  vbat      = 0;
   static uint8_t   vvol      = 0;
   
   static bool      vmute     = 0;
+  static uint8_t   vindex    = 0;
   static uint8_t   vchan     = 0;
+  static uint8_t   vchannum  = 0;
   static bool      vfsel     = 0;
   
   static uint8_t   vsec      = 0;
   
   uint8_t len;
   uint8_t str[16];
-  uint16_t tmp, data, i, j;
+  uint16_t tmp, data;
+  int16_t i, j;
+  uint16_t band = sTuner.Radio.nBandMode;
   
   if(init)
   {
@@ -485,19 +478,31 @@ void UI_Main(bool init)
     GUI_DrawBuff_Origin(0,80,16,16,img_bat);
     GUI_DrawBuff_Origin(42,80,16,16,img_volt);
     
+    //GUI_DrawBuff_Origin(196,64,16,16,img_spk+sTuner.Audio.index*64);
     GUI_DrawBuff_Origin(196,64,16,16,img_spk);
     GUI_DrawBuff_Origin(238,64,16,16,img_percent);
     
-    GUI_Rectangle(196+2,80+2,53,13,1,COLOR_BLACK);
+    GUI_DrawBuff_Origin(196,80,16,16,img_IntTemp);
+    GUI_DrawBuff_Origin(238,80,16,16,img_degree);
+    
+    if(sDisplay.emiFree == true)
+    {
+      GUI_DrawBuff_Origin(124,80,16,16,img_channel);
+      GUI_DrawBuff_Origin(156,80,8,16,img_num16x+352);
+      
+      GUI_DrawBuff_Origin(64,72,126,8,img_scale);
+    }
+    //GUI_Rectangle(196+2,80+2,53,13,1,COLOR_BLACK);  // rect for VU meter
   }
   
   // frequency
-  if(vfreq != sTuner.Radio.nBandFreq[sTuner.Radio.nBandMode] || vstep != sTuner.Radio.nFreqStep[sTuner.Radio.nBandMode] || init)
+  if(vfreq != sTuner.Radio.nBandFreq[band] || vstep != sTuner.Radio.nFreqStep[band] || init)
   {
-    vfreq = sTuner.Radio.nBandFreq[sTuner.Radio.nBandMode];
+    vfreq = sTuner.Radio.nBandFreq[band];
     len = num2str(vfreq, str);
     
     GUI_FillBuff_Origin(41, 0, 60, 48, 0x00);  // Clear first two digits
+    GUI_FillBuff_Origin(2, 48, 188, 16, 0x00);  // Clear R D S
     
     GUI_DrawBuff_Origin(166, 0, 30, 48, img_num48x+str[len-1]*360);
     GUI_DrawBuff_Origin(136, 0, 30, 48, img_num48x+str[len-2]*360);
@@ -508,8 +513,8 @@ void UI_Main(bool init)
       GUI_DrawBuff_Origin(41, 0, 30, 48, img_num48x+str[len-5]*360);
     
     // draw operate indicator
-    vstep = sTuner.Radio.nFreqStep[sTuner.Radio.nBandMode];
-    tmp = nBandStep[sTuner.Radio.nBandMode][vstep];
+    vstep = sTuner.Radio.nFreqStep[band];
+    tmp = nBandStep[band][vstep];
     len = Judge_length(tmp);
     GUI_FillBuff(stepIndi[len-1],46,22,2,COLOR_DARK);
     if(tmp == 5)
@@ -518,6 +523,15 @@ void UI_Main(bool init)
       GUI_Text(198,0,-1,-1,"x9KH",&Font12,COLOR_BLACK,COLOR_WHITE);
     else
       GUI_FillBuff(198,0,28,12,COLOR_WHITE);
+    
+    // draw scale indicator
+    if(sDisplay.emiFree == true)
+    {
+      i = 125*(vfreq-nBandFMin[band])/(nBandFMax[band]-nBandFMin[band]) + 61;
+      GUI_FillBuff(61,68,126+7,4,COLOR_WHITE);
+      GUI_DrawBuff_Origin(i,68,7,4,img_curser7x4);
+    }
+    
   }
   
   // filter
@@ -537,20 +551,23 @@ void UI_Main(bool init)
     switch(vband)
     {
       case 0 :{  //FM
-        GUI_DrawBuff_Origin(131, 40, 5, 8, img_dot48x);
-        GUI_DrawBuff_Origin(196,12 ,59,36,img_unit+531);
+        GUI_DrawBuff_Origin(131, 40, 5, 8, img_dot48x);  // draw dot & MHz
+        GUI_DrawBuff_Origin(196, 12 ,59, 36, img_unit+531);
       };break;
       case 1 :{  //LW
-        GUI_FillBuff_Origin(131, 40, 5, 8, 0x00);  // erase dot, draw khz
-        GUI_DrawBuff_Origin(196,12,59,36,img_unit);
+        GUI_FillBuff_Origin(131, 40, 5, 8, 0x00);  // erase dot, draw KHz
+        GUI_DrawBuff_Origin(196, 12, 59, 36, img_unit);
       };break;
       case 2 :{  //MW
-        GUI_DrawBuff_Origin(196,12,59,36,img_unit);
+        GUI_DrawBuff_Origin(196, 12, 59, 36, img_unit);
       };break;
       case 3 :{  //SW
-        GUI_DrawBuff_Origin(196,12,59,36,img_unit);
+        GUI_DrawBuff_Origin(196, 12, 59, 36, img_unit);
       };break;
     }
+    if(sDisplay.emiFree == true)
+      GUI_DrawBuff_Origin(74, 80, 24, 16, img_band+vband*96);
+    
   }
   
   if(vstereo != sTuner.Status.bSTIN || init)
@@ -599,6 +616,31 @@ void UI_Main(bool init)
     GUI_DrawBuff_Origin(34,80,8,16,img_num16x+str[2]*32);
   }
   
+  if(vtemp != sDevice.nIntTemp || init)
+  {
+    vtemp = sDevice.nIntTemp;
+    
+    if(vtemp < 0)
+    {
+      data = -vtemp;
+      GUI_DrawBuff_Origin(212,80,8,16,img_num16x+32*10);
+    }
+    else
+    {
+      data = vtemp;
+      GUI_FillBuff_Origin(212,80,8,16,0x00);
+    }
+    
+    len = num2str(data, str);
+    
+    GUI_DrawBuff_Origin(230,80,8,16,img_num16x+str[len-1]*32);
+    
+    if(len >=2)
+      GUI_DrawBuff_Origin(222,80,8,16,img_num16x+str[len-2]*32);
+    else
+      GUI_FillBuff_Origin(222,80,8,16,0x00);
+  }
+  
   if(vvol != sTuner.Audio.nVolume[sTuner.Audio.index] || init)
   {
     vvol = sTuner.Audio.nVolume[sTuner.Audio.index];
@@ -615,17 +657,30 @@ void UI_Main(bool init)
       GUI_FillBuff_Origin(212,64,8,16,0x00);
   }
   
-  if(vchan != nBandCh[sTuner.Radio.nBandMode] || init)
+  if(vchan != nBandCh[sTuner.Radio.nBandMode] || vchannum != nBandChNum[sTuner.Radio.nBandMode] || init)
   {
     vchan = nBandCh[sTuner.Radio.nBandMode];
+    vchannum = nBandChNum[sTuner.Radio.nBandMode];
     
-    GUI_FillBuff_Origin(0,48,36,16,COLOR_WHITE);
-    GUI_Text(1,50,-1,-1,"CH.",&Font12,COLOR_BLACK,COLOR_WHITE);
-    GUI_Number(22,50,vchan,ALIGNMENT_LEFT,&Font12,COLOR_BLACK,COLOR_WHITE);
+    if(sDisplay.emiFree == true)
+    {
+      GUI_DrawBuff_Origin(140,80,8,16,img_num16x+32*(vchan/10));
+      GUI_DrawBuff_Origin(148,80,8,16,img_num16x+32*(vchan%10));
+      
+      GUI_DrawBuff_Origin(164,80,8,16,img_num16x+32*((vchannum)/10));
+      GUI_DrawBuff_Origin(172,80,8,16,img_num16x+32*((vchannum)%10));
+    }
+    else
+    {
+      GUI_FillBuff_Origin(0,48,36,16,COLOR_WHITE);
+      GUI_Text(1,50,-1,-1,"CH.",&Font12,COLOR_BLACK,COLOR_WHITE);
+      GUI_Number(22,50,vchan,ALIGNMENT_LEFT,&Font12,COLOR_BLACK,COLOR_WHITE);
+    }
   }
   
+  
   // GSA
-  if(nGsaVal[0] == 1 || init)
+  if(nGsaVal[0] == 1)
   {
     nGsaVal[0] = 0;
     // draw
@@ -634,17 +689,20 @@ void UI_Main(bool init)
       UI_DrawOneGSA(i, nGsaVal[i+1]);
     }
     
-    UI_DrawVU(nQPeakDet);
+    // UI_DrawVU(nQPeakDet);
   }
   
-  if(vmute != sTuner.Audio.bMuted || init)
+  if(vmute != sTuner.Audio.bMuted || vindex != sTuner.Audio.index || init)
   {
     vmute = sTuner.Audio.bMuted;
+    vindex = sTuner.Audio.index;
     if(vmute)
       GUI_DrawBuff_Origin(196,64,16,16,img_spkMute);
     else
       GUI_DrawBuff_Origin(196,64,16,16,img_spk);
   }
+  
+  
   if(vsec != sDevice.sTime.second || init)
   {
     vsec = sDevice.sTime.second;
@@ -658,6 +716,30 @@ void UI_Main(bool init)
     GUI_Char(246,50,sDevice.sTime.second%10+'0',&Font12,COLOR_BLACK,COLOR_WHITE);
   }
   
+  
+  // R D S ∞
+  if( (sRDSData.RDSFlag & ReadyBit_PI) != 0 )
+  {
+    sRDSData.RDSFlag &= ~ReadyBit_PI;
+    tmp = sRDSData.PI;
+    for(i = 3; i >= 0; i--)
+    {
+      data = tmp & 0x000F;
+      if(data < 10)
+        str[i] = data + '0';
+      else
+        str[i] = data - 10 + 'A';
+      tmp = tmp >> 4;
+    }
+    str[4] = 0;
+    GUI_Text(2, 50, -1, -1, (char*)str, &Font12, COLOR_BLACK, COLOR_WHITE);
+  }
+  
+  if( (sRDSData.RDSFlag & ReadyBit_PS) != 0 )
+  {
+    sRDSData.RDSFlag &= ~ReadyBit_PS;
+    GUI_Text(44, 50, -1, -1, (char*)sRDSData.PS, &Font12, COLOR_BLACK, COLOR_WHITE);
+  }
 }
 
 void UI_Menu(int8_t index, bool init)
@@ -680,7 +762,7 @@ void UI_Menu(int8_t index, bool init)
   switch(index)
   {
     case 0 :GUI_DrawBuff(12, 23, 50, 50, MODE_GREY, 0, 0, img_mDisplay50x);break;
-    case 1 :GUI_DrawBuff(12, 23, 50, 50, MODE_GREY, 0, 0, img_mUntitled50x);break;
+    case 1 :GUI_DrawBuff(12, 23, 50, 50, MODE_GREY, 0, 0, img_mMusic50x);break;
     case 2 :GUI_DrawBuff(12, 23, 50, 50, MODE_GREY, 0, 0, img_mUntitled50x);break;
     case 3 :GUI_DrawBuff(12, 23, 50, 50, MODE_GREY, 0, 0, img_mUntitled50x);break;
     case 4 :GUI_DrawBuff(12, 23, 50, 50, MODE_GREY, 0, 0, img_mUntitled50x);break;

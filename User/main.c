@@ -63,10 +63,10 @@ struct keyFunc sAudioKeyFunc;
 struct device sDevice = {
 	.bAutoMono=true,
 	.bSoftReboot=true,
-	.sInfo.pid[0]=5,  // flash arrange
+	.sInfo.pid[0]=6,  // flash arrange
 	.sInfo.pid[1]=1,  // version
-	.sInfo.pid[2]=6,  // subversion
-	.sInfo.pid[3]=20240723,
+	.sInfo.pid[2]=7,  // subversion
+	.sInfo.pid[3]=20240801,
 };
 
 /************************************Indicator*********************************/
@@ -252,6 +252,8 @@ void AdjustFreq(int8_t dir)
 	f = inRangeInt(nBandFMin[sTuner.Radio.nBandMode], nBandFMax[sTuner.Radio.nBandMode], f);
 	
 	TuneFreq(f, Preset);
+  
+  RDS_Refresh();
 }
 
 void AdjustFilter(int8_t dir)
@@ -378,6 +380,8 @@ void SearchCH(int8_t dir)
 	uint16_t cursorFreq = initFreq;
 	uint8_t initFilt = sTuner.Config.nBandFilter[sTuner.Radio.nRFMode];
 	
+  RDS_Refresh();
+  
 	SetMute(true);
 	
 	if (sTuner.Radio.nRFMode == RFMODE_FM)
@@ -532,7 +536,9 @@ void GoChannel(int8_t dir)
 	int8_t index = 0;
 	uint8_t flag = 0;
 	uint16_t nBandMode = sTuner.Radio.nBandMode;
-	
+  
+  RDS_Refresh();
+  
 	if(nBandChNum[nBandMode] != 0)	//Ӑ̨¼ǂ¼
 	{
 		if(dir>0)
@@ -1540,7 +1546,7 @@ int main(void)
 		
 		/***************************/
 		
-		if(bFlagGSA == true)
+		if(bFlagGSA == true && !sDisplay.emiFree)
 		{
 			bFlagGSA = 0;
 			Get_REG(0x1A, (uint8_t *)nGsaVal+1, 9);
@@ -1636,7 +1642,7 @@ int main(void)
 // 100mS*INT
 #define TIM_INT_RFS    5
 #define TIM_INT_ONE    10
-#define TIM_INT_BAT    49
+#define TIM_INT_BAT    48
 
 void TIM_Callback(uint8_t tim)
 {
@@ -1706,9 +1712,9 @@ void TIM_Callback(uint8_t tim)
 		}
 		
 		timer_LCD--;
-		if(timer_LCD == 5)
+		if(timer_LCD == 5 && !sDisplay.emiFree)
 		{
-			//bFlagGSA = 1;
+			bFlagGSA = 1;
 		}
 		if(timer_LCD == 0)
 		{
@@ -1725,12 +1731,12 @@ void TIM_Callback(uint8_t tim)
 			bFlagRDS = 1;
 		}
 		
-//		timer_GSA--;
-//		if(timer_GSA == 0)
-//		{
-//			timer_GSA = TIM_INT_GSA;
-//			bFlagGSA = 1;
-//		}
+//    timer_GSA--;
+//    if(timer_GSA == 0)
+//    {
+//      timer_GSA = TIM_INT_GSA;
+//      bFlagGSA = 1;
+//    }
 		
 		timer_interrupt_flag_clear(TIMER5, TIMER_INT_FLAG_UP);
 	}
@@ -1765,7 +1771,7 @@ void TIM_Callback(uint8_t tim)
 		{
 			if(gpio_input_bit_get(GPIOC, GPIO_PIN_3) == RESET)
 			{
-				timer_BAT = 1;
+				timer_BAT = 2;
 				gpio_bit_set(GPIOC, GPIO_PIN_3);
 			}
 			else
@@ -1877,6 +1883,9 @@ void ADC_Callback(uint8_t adc, char group)
 			valInsert = adc_inserted_data_read(ADC0, ADC_INSERTED_CHANNEL_0);
 			sDevice.nBatVolt = (float)valInsert*4389.0/40960.0;
 			gpio_bit_reset(GPIOC, GPIO_PIN_3);
+      
+      valInsert = adc_inserted_data_read(ADC0, ADC_INSERTED_CHANNEL_1);
+      sDevice.nIntTemp = myround( (1.45-(float)valInsert*3.3/4096.0)/(0.0041) + 25 );
 			adc_interrupt_flag_clear(ADC0,ADC_INT_FLAG_EOIC);
 		}
 	}

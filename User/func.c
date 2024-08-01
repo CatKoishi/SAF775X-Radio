@@ -40,12 +40,35 @@ int32_t inRangeLoop(int32_t min, int32_t max, int32_t num, int32_t dir)
 	return tmp;
 }
 
+// @return: true = range ok
+bool checkRange(int min, int max, int num)
+{
+  if(num < min || num > max)
+    return false;
+  return true;
+}
+
 uint32_t myabs(int32_t number)
 {
 	if(number<0)
 		return -number;
 	else
 		return number;
+}
+
+int myround(float num)
+{
+  int tmp = num*10;
+  int left = tmp%10;
+
+  if(myabs(left) < 5)
+    tmp -= left;
+  else if(left >= 5)
+    tmp += (10-left);
+  else
+    tmp -= (10+left);
+  
+  return tmp/10;
 }
 
 /**************************************************************************************/
