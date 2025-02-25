@@ -862,9 +862,9 @@ void LCD_SPI_Init(void)
   
   //PB12, 14 -> LCD_CS, DC
   GPIO_BOP(GPIOB) = GPIO_PIN_12 | GPIO_PIN_14;
-  gpio_init(GPIOB, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, GPIO_PIN_12 | GPIO_PIN_14);
+  gpio_init(GPIOB, GPIO_MODE_OUT_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_12 | GPIO_PIN_14);
   //PB13,15 -> SPI1_SCK,SDA
-  gpio_init(GPIOB, GPIO_MODE_AF_PP, GPIO_OSPEED_10MHZ, GPIO_PIN_13 | GPIO_PIN_15);
+  gpio_init(GPIOB, GPIO_MODE_AF_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_13 | GPIO_PIN_15);
   
   spi_parameter_struct sspi;
   /* deinitilize SPI and the parameters */
@@ -877,7 +877,7 @@ void LCD_SPI_Init(void)
   sspi.frame_size           = SPI_FRAMESIZE_8BIT;
   sspi.clock_polarity_phase = SPI_CK_PL_HIGH_PH_2EDGE;
   sspi.nss                  = SPI_NSS_SOFT;
-  sspi.prescale             = SPI_PSC_8;  //F = 60MHz(APB1) / 8(PSC) = 7.5MHz (Max = 12.5MHz)
+  sspi.prescale             = SPI_PSC_2;  //F = 60MHz(APB1) / 8(PSC) = 7.5MHz (Max = 12.5MHz)
   sspi.endian               = SPI_ENDIAN_MSB;
   spi_init(SPI1, &sspi);
   

@@ -66,7 +66,7 @@ struct device sDevice = {
 	.sInfo.pid[0]=6,  // flash arrange
 	.sInfo.pid[1]=1,  // version
 	.sInfo.pid[2]=7,  // subversion
-	.sInfo.pid[3]=20240801,
+	.sInfo.pid[3]=20240802,
 };
 
 /************************************Indicator*********************************/
@@ -1696,7 +1696,7 @@ void TIM_Callback(uint8_t tim)
 			if(nowDET != lastDET)
 			{
 				if(nowDET == 1)  // headphone plugin
-				{
+				{ 
 					sTuner.Audio.index = 0;
 					gpio_bit_reset(GPIOC, GPIO_PIN_4);
 					gpio_bit_set(GPIOA, GPIO_PIN_6);
