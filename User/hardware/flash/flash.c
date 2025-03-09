@@ -147,6 +147,34 @@ void flash_program(uint32_t addr, uint8_t* data, uint32_t numTx)
 	
 }
 
+#define BULK_SIZE    4096
+
+int flash_erase_bulk(uint32_t addr, uint32_t size)
+{
+  uint32_t i = 0;
+  uint32_t sAddr = addr;
+  int erase_pages = size / BULK_SIZE;
+  if( size % BULK_SIZE != 0) {
+    erase_pages++;
+  }
+  
+  for(i = 0; i < erase_pages; i++) {
+    flash_waitBusy(0);
+    flash_writeEnable(1);
+    FLASH_CS(0);
+    
+    flash_readWriteByte(ERASE_SECTOR);
+    
+    flash_readWriteByte((uint8_t)( (sAddr+BULK_SIZE*i) >> 16));
+    flash_readWriteByte((uint8_t)( (sAddr+BULK_SIZE*i) >> 8));
+    flash_readWriteByte((uint8_t)( (sAddr+BULK_SIZE*i) ));
+    
+    FLASH_CS(1);
+    flash_waitBusy(15);
+  }
+  
+  return erase_pages;
+}
 
 uint8_t flash_erase(uint8_t type, uint16_t index)
 {

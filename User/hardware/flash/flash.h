@@ -63,6 +63,7 @@ uint16_t flash_readID(void);
 void flash_read(uint32_t addr, uint8_t* buffer, uint32_t numRx);
 void flash_program_page(uint32_t addr, uint8_t* data, uint16_t numTx);
 void flash_program(uint32_t addr, uint8_t* data, uint32_t numTx);
+int flash_erase_bulk(uint32_t addr, uint32_t size);
 uint8_t flash_erase(uint8_t type, uint16_t index);
 void flash_write(uint32_t addr, uint8_t* data, uint32_t numTx);
 

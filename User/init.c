@@ -199,7 +199,6 @@ void I2C_Init(void)
 void USART_Init(void)
 {
 	/* USART configure */
-	
 	usart_deinit(USART0);
 	usart_baudrate_set(USART0, 921600U);
 	usart_word_length_set(USART0, USART_WL_8BIT);

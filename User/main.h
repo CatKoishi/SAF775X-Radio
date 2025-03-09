@@ -50,14 +50,16 @@ OF SUCH DAMAGE.
 #define MENU_ATS_INDEX    6
 #define MENU_DEVICE_INDEX    5
 
-#define FLASH_DEVICE  0
-#define FLASH_RADIO   1
-#define FLASH_DISP    2
-#define FLASH_AUDIO   3
-#define FLASH_FM      9
-#define FLASH_LW      10
-#define FLASH_MW      11
-#define FLASH_SW      12
+#define CFG_ALL    15
+#define CFG_DEVICE  0
+#define CFG_RADIO   1
+#define CFG_DISP    2
+#define CFG_AUDIO   3
+
+#define FLASH_FM      16
+#define FLASH_LW      17
+#define FLASH_MW      18
+#define FLASH_SW      19
 //    PAGE    0       1       2     3-8      9          10          11      12
 // CONTENT DEVICE | RADIO | DISP | AUDIO | CH_FM | CH_LW+CH_NUM | CH_MW | CH_SW
 
@@ -89,8 +91,14 @@ struct device
 	uint8_t bSoftReboot;
 };
 
+typedef struct {
+  uint8_t chanMax;
+  uint8_t chanNum;
+  uint8_t nowIndex;
+  uint16_t chanFreq[100];
+}CHANNEL;
+
 extern struct device sDevice;
-extern uint8_t nBandChNum[];
 extern struct RDSData sRDSData;
 
 void EXTI_Callback(uint8_t exti_line);

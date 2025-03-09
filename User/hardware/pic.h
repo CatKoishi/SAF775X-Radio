@@ -58,6 +58,9 @@ extern const unsigned char img_arrowLeft11x16[];
 extern const unsigned char img_arrowRight11x16[];
 extern const unsigned char img_mDisplay50x[];
 extern const unsigned char img_mMusic50x[];
+extern const unsigned char img_mRadio50x[];
+extern const unsigned char img_mSearch50x[];
+extern const unsigned char img_mDevice50x[];
 extern const unsigned char img_mAbout50x[];
 extern const unsigned char img_mUntitled50x[];
 

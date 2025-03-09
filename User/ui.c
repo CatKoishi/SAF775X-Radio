@@ -11,6 +11,7 @@
 /*************************************EXTERN***********************************/
 
 extern struct Dirana3Radio sTuner;
+extern CHANNEL nChannel[NUM_BANDS];
 extern uint8_t nGsaVal[10];
 extern uint32_t nQPeakDet;
 
@@ -25,8 +26,6 @@ extern struct keyFunc sAudioKeyFunc;
 extern struct device sDevice;
 
 extern volatile bool bFilterSel;  //是否设置带宽
-
-extern uint8_t nBandCh[NUM_BANDS];
 
 /*************************************CONST************************************/
 
@@ -657,10 +656,10 @@ void UI_Main(bool init)
       GUI_FillBuff_Origin(212,64,8,16,0x00);
   }
   
-  if(vchan != nBandCh[sTuner.Radio.nBandMode] || vchannum != nBandChNum[sTuner.Radio.nBandMode] || init)
+  if(vchan != nChannel[sTuner.Radio.nBandMode].nowIndex || vchannum != nChannel[sTuner.Radio.nBandMode].chanNum || init)
   {
-    vchan = nBandCh[sTuner.Radio.nBandMode];
-    vchannum = nBandChNum[sTuner.Radio.nBandMode];
+    vchan = nChannel[sTuner.Radio.nBandMode].nowIndex;
+    vchannum = nChannel[sTuner.Radio.nBandMode].chanNum;
     
     if(sDisplay.emiFree == true)
     {
@@ -763,9 +762,9 @@ void UI_Menu(int8_t index, bool init)
   {
     case 0 :GUI_DrawBuff(12, 23, 50, 50, MODE_GREY, 0, 0, img_mDisplay50x);break;
     case 1 :GUI_DrawBuff(12, 23, 50, 50, MODE_GREY, 0, 0, img_mMusic50x);break;
-    case 2 :GUI_DrawBuff(12, 23, 50, 50, MODE_GREY, 0, 0, img_mUntitled50x);break;
-    case 3 :GUI_DrawBuff(12, 23, 50, 50, MODE_GREY, 0, 0, img_mUntitled50x);break;
-    case 4 :GUI_DrawBuff(12, 23, 50, 50, MODE_GREY, 0, 0, img_mUntitled50x);break;
+    case 2 :GUI_DrawBuff(12, 23, 50, 50, MODE_GREY, 0, 0, img_mRadio50x);break;
+    case 3 :GUI_DrawBuff(12, 23, 50, 50, MODE_GREY, 0, 0, img_mSearch50x);break;
+    case 4 :GUI_DrawBuff(12, 23, 50, 50, MODE_GREY, 0, 0, img_mDevice50x);break;
     case 5 :GUI_DrawBuff(12, 23, 50, 50, MODE_GREY, 0, 0, img_mAbout50x);break;
     default :   break;
   }

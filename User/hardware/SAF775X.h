@@ -7,7 +7,7 @@
 #define DSP_I2C_ADDR      0x38
 
 
-// RF Modes
+// Band RF Mode
 #define RFMODE_FM       0	//FM
 #define RFMODE_AM       1	//AM
 
@@ -16,7 +16,7 @@
 #define MID_VOL         20
 #define MAX_VOL         100
 
-// Bands
+// Band Mode
 #define NUM_BANDS       4
 #define BAND_FM         0
 #define BAND_LW         1

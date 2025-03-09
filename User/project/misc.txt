@@ -1,0 +1,34 @@
+
+测量结果
+// 6.56ms / update
+// 每次同步LCD显存需要6.56ms，最大同步速率150FPS (PSC = 8, F = 7.5MHz)
+// 每30/1000秒同步一次时，总线利用率(1-78.14%)
+
+// UI_Main(true); 需要5.37ms渲染
+
+
+UI 计划
+Radio DSP [SoftMute, StereoBlend, HighCut, FMSI]
+
+Audio DSP [Filter]
+
+Left ENC  [Long Press] -> [Change Band]
+          [Short Press]-> [Change Step]
+		  [Rotate]     -> [Change Freq]
+
+Menu Key  [Long Press] -> [Shutdown]
+          [Short Press]-> [Menu]
+
+UP Key    [Long Press] -> [Search UP]
+          [Short Press]-> [Pre Channel]
+
+Down Key  [Long Press] -> [Search Down]
+          [Short Press]-> [Next Channel]
+
+OK Key    [Long Press] -> [Save Channel]
+          [Short Press]-> [Set Bandwidth]
+
+Right ENC [Long Press] -> [Switch Screen] -> [Main/EQ/Tone]
+          [Short Press]-> [Mute]
+		  [Rotate]     -> [Change Vol]
+

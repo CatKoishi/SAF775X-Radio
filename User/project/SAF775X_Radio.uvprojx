@@ -341,7 +341,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER, GD32F30X_HD, __FPU_USED, __FPU_PRESENT, __TARGET_FPU_VFP, ARM_MATH_CM4</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\User;..\..\Firmware\GD32F30x_standard_peripheral\Include;..\..\Firmware\CMSIS\GD\GD32F30x\Include;..\..\Firmware\CMSIS;..\hardware;..\..\Firmware\CMSIS\Include</IncludePath>
+              <IncludePath>..\..\User;..\..\Firmware\GD32F30x_standard_peripheral\Include;..\..\Firmware\CMSIS\GD\GD32F30x\Include;..\..\Firmware\CMSIS;..\hardware;..\..\Firmware\CMSIS\Include;..\lib\FlashDB\inc;..\lib\FlashDB\port\fal\inc;..\lib</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -581,14 +581,9 @@
               <FilePath>..\func.h</FilePath>
             </File>
             <File>
-              <FileName>todo.txt</FileName>
+              <FileName>README.md</FileName>
               <FileType>5</FileType>
-              <FilePath>.\todo.txt</FilePath>
-            </File>
-            <File>
-              <FileName>log.txt</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\log.txt</FilePath>
+              <FilePath>..\..\README.md</FilePath>
             </File>
           </Files>
         </Group>
@@ -661,11 +656,6 @@
               <FilePath>..\hardware\Dirana3BasicDSP.h</FilePath>
             </File>
             <File>
-              <FileName>undo_code.txt</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\undo_code.txt</FilePath>
-            </File>
-            <File>
               <FileName>rtc.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\hardware\rtc.c</FilePath>
@@ -709,6 +699,101 @@
               <FileName>font24.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\hardware\font24.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>FlashDB</GroupName>
+          <Files>
+            <File>
+              <FileName>fdb.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\lib\FlashDB\src\fdb.c</FilePath>
+            </File>
+            <File>
+              <FileName>fdb_file.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\lib\FlashDB\src\fdb_file.c</FilePath>
+            </File>
+            <File>
+              <FileName>fdb_kvdb.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\lib\FlashDB\src\fdb_kvdb.c</FilePath>
+            </File>
+            <File>
+              <FileName>fdb_tsdb.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\lib\FlashDB\src\fdb_tsdb.c</FilePath>
+            </File>
+            <File>
+              <FileName>fdb_utils.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\lib\FlashDB\src\fdb_utils.c</FilePath>
+            </File>
+            <File>
+              <FileName>fdb_cfg.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\lib\FlashDB\inc\fdb_cfg.h</FilePath>
+            </File>
+            <File>
+              <FileName>fdb_def.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\lib\FlashDB\inc\fdb_def.h</FilePath>
+            </File>
+            <File>
+              <FileName>fdb_low_lvl.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\lib\FlashDB\inc\fdb_low_lvl.h</FilePath>
+            </File>
+            <File>
+              <FileName>flashdb.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\lib\FlashDB\inc\flashdb.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Fal</GroupName>
+          <Files>
+            <File>
+              <FileName>fal.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\lib\FlashDB\port\fal\src\fal.c</FilePath>
+            </File>
+            <File>
+              <FileName>fal_flash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\lib\FlashDB\port\fal\src\fal_flash.c</FilePath>
+            </File>
+            <File>
+              <FileName>fal_flash_stm32f1_port.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\lib\FlashDB\port\fal\src\fal_flash_stm32f1_port.c</FilePath>
+            </File>
+            <File>
+              <FileName>fal_partition.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\lib\FlashDB\port\fal\src\fal_partition.c</FilePath>
+            </File>
+            <File>
+              <FileName>fal_rtt.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\lib\FlashDB\port\fal\src\fal_rtt.c</FilePath>
+            </File>
+            <File>
+              <FileName>fal.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\lib\FlashDB\port\fal\inc\fal.h</FilePath>
+            </File>
+            <File>
+              <FileName>fal_cfg.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\lib\FlashDB\port\fal\inc\fal_cfg.h</FilePath>
+            </File>
+            <File>
+              <FileName>fal_def.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\lib\FlashDB\port\fal\inc\fal_def.h</FilePath>
             </File>
           </Files>
         </Group>
