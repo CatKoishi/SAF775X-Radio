@@ -13,9 +13,9 @@
 
 ## 📖 简介
 
-基于恩智浦Dirana3系列的多波段收音机，具体型号为SAF775X，支持双天线接收，可启用多种高级收音算法，由于使用的是演示密钥，所以开机3小时后会自动复位
+基于恩智浦 Dirana3 系列的多波段收音机，具体型号为 SAF775X，支持双天线接收，可启用多种高级收音算法，由于使用的是演示密钥，所以开机3小时后会自动复位
 
-此密钥不涉及对SAF775X芯片的破解，没有商用价值，与 NXP 的企业权益无冲突，演示密钥与部分程序来源于[rayc345/WTCRC775X](https://github.com/rayc345/WTCRC775X)
+此密钥不涉及对 SAF775X 芯片的破解，没有商用价值，与 NXP 的企业权益无冲突，演示密钥与部分程序来源于[rayc345/WTCRC775X](https://github.com/rayc345/WTCRC775X)
 
 #### 🔗 项目链接
 
@@ -41,9 +41,61 @@
 - [ ] 针对AM噪声的pEQ
 - [ ] 利用通用滤波器，延迟线的伪立体声
 
+## 固件下载/更新
+
+### 下载
+
+方法 1:
+
+- 将收音机通过 USB 连接到电脑（需安装CH340驱动）
+- 打开收音机电源开关到耳机方向
+- **保持短接** "J401" 的同时短按复位键
+- 通过 `GD32 All In One Programmer`（GD官网提供）使用串口下载
+
+方法 2:
+
+- 使用调试器（DAP-Link，GD-Link等）下载
+
+### 更新
+
+- 将收音机通过 USB 连接到电脑（需安装CH340驱动）
+- 进入菜单，导航到 `Device`-`Firmware Update` 按下 OK 键
+- 长按 OK 键直到屏幕内容消失
+- 通过 `GD32 All In One Programmer`（GD官网提供）使用串口下载
+
+---
+
+### Download
+
+Method 1: 
+
+- Connect the radio to your PC with functional USB cable(CH340 Driver Required)
+- Turn on the power switch
+- **Keep** Jumper "J401" shorted and press RST button
+- Use `GD32 All In One Programmer`(Provided by GigaDevice) to download
+
+Method 2:
+
+- Use Debugger(DAP-Link, GD-Link, etc.) to download directly
+
+### Update
+
+- Connect the radio to your PC with functional USB cable(CH340 Driver Required)
+- Navigate to `Device`-`Firmware Update` and press OK button
+- Long press OK button and wait for screen turn off
+- Use `GD32 All In One Programmer`(Provided by GigaDevice) to download
+
+![ISP](/Asset/gd32_isp.jpg "GD32 All In One Programmer流程")
+
 ---
 
 ## 📝 更新记录
+
+### 20260605-2.8.1
+
+- 修复多处无关设置
+- 修复结构体更新后 flash 没有同步更新的问题
+- 更新 README 固件下载/更新方法
 
 ### 20260527-2.8
 

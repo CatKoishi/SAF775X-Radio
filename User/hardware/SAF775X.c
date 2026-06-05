@@ -931,8 +931,6 @@ void SetHostI2S0Output(bool on)
 		//   0x1A = 0 -> Philips format for Host I2S outputs
 		//   0x16 = 0 -> Host I2S output 0 enabled
 		Set_REGFree(3, 0xA9, 0x1A, 0x00);
-		Set_REGFree(3, 0xA9, 0x60, 0x00);
-		Set_REGFree(3, 0xA9, 0x65, 0x00);
 		Set_REGFree(3, 0xA9, 0x16, 0x00);
 		Set_ADSP(ADSP_X_HIIS0Outpntr, ADSP_X_FrontOutL_REL);
 	}

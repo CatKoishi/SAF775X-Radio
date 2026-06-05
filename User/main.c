@@ -72,7 +72,7 @@ struct device sDevice = {
   .bCoaxEnable=false,
   .bI2SOutEnable=false,
   .bSoftReboot=true,
-  .sInfo.pid[0]=15,  // flash arrange
+  .sInfo.pid[0]=16,  // flash arrange
   .sInfo.pid[1]=2,  // version
   .sInfo.pid[2]=8,  // subversion
   .sInfo.pid[3]=20260526
@@ -88,8 +88,6 @@ volatile uint32_t nQPeakDet;
 
 struct RDSBuffer sRDSBuffer;
 struct RDSData sRDSData;
-
-volatile bool tmpMono;
 
 uint32_t cfg_crc = 0;
 
@@ -448,18 +446,20 @@ static void ApplyAudioOutputByDetect(uint8_t hpDet)
   {
     sTuner.Audio.index = 1;
     gpio_bit_reset(GPIOA, GPIO_PIN_6);
-    if(sDevice.bCoaxEnable == false && sDevice.bI2SOutEnable == false)
+    if(sDevice.bCoaxEnable == false && sDevice.bI2SOutEnable == false) {
       gpio_bit_set(GPIOC, GPIO_PIN_4);
-    else
+      if(sDevice.bAutoMono == true)
+        sTuner.Config.bForceMono = true;
+      else
+        sTuner.Config.bForceMono = false;
+    }
+    else {
       gpio_bit_reset(GPIOC, GPIO_PIN_4);
-    if(sDevice.bAutoMono == true)
-      sTuner.Config.bForceMono = true;
-    else
       sTuner.Config.bForceMono = false;
+    }
   }
 
-  if(sDevice.bCoaxEnable)
-    SetCoaxOutput(true);
+  SetRadioSignal();
 }
 
 void reFillBackLightTimer(void)
@@ -1111,14 +1111,12 @@ void MenuAudio(void)
       {
         sDevice.bCoaxEnable = !sDevice.bCoaxEnable;
         SetCoaxOutput(sDevice.bCoaxEnable);
-        ApplyAudioOutputByDetect(gpio_input_bit_get(GPIOA, GPIO_PIN_7));
       }
-	      else if(index == 5)
-	      {
-	        sDevice.bI2SOutEnable = !sDevice.bI2SOutEnable;
-	        SetHostI2S0Output(sDevice.bI2SOutEnable);
-          ApplyAudioOutputByDetect(gpio_input_bit_get(GPIOA, GPIO_PIN_7));
-	      }
+      else if(index == 5)
+      {
+        sDevice.bI2SOutEnable = !sDevice.bI2SOutEnable;
+        SetHostI2S0Output(sDevice.bI2SOutEnable);
+      }
       else if(bandNum[index] > 0)
       {
         bandSel = inRangeLoop(0,bandNum[index]-1,bandSel,1);
@@ -1752,8 +1750,8 @@ int main(void)
   SetHostI2S0Output(sDevice.bI2SOutEnable);
   lastDET = nowDET;
   
+  SetFMStereo(sTuner.Config.nFMST);
   SetFMStereoImprovement(sTuner.Config.bFMSI);
-  tmpMono = sTuner.Config.bForceMono;
   
   SetMute(sTuner.Audio.bMuted);
   
@@ -1854,10 +1852,6 @@ int main(void)
     
     VolumeHandler();
     
-    if(tmpMono != sTuner.Config.bForceMono) {
-      SetFMStereo(sTuner.Config.nFMST);
-      tmpMono = sTuner.Config.bForceMono;
-    }
     /***************************/
     
     if(bFlagGSA == true && !sDisplay.emiFree)
@@ -1911,12 +1905,12 @@ int main(void)
       nowDET = gpio_input_bit_get(GPIOA,GPIO_PIN_7);
       ApplyAudioOutputByDetect(nowDET);
       SetCoaxOutput(sDevice.bCoaxEnable);
-	      SetHostI2S0Output(sDevice.bI2SOutEnable);
+	    SetHostI2S0Output(sDevice.bI2SOutEnable);
       
       lastDET = nowDET;
-      
+
+      SetFMStereo(sTuner.Config.nFMST);
       SetFMStereoImprovement(sTuner.Config.bFMSI);
-      tmpMono = sTuner.Config.bForceMono;
       
       initSignalScaler();
 
