@@ -1,7 +1,11 @@
 /User/project/Listings/
 /User/project/Objects/
 
+.vscode
+.vscode/*
+
 .idea
 .idea/*
-User/project/SAF775X_Radio.uvguix.11947
-User/project/SAF775X_Radio.uvoptx
+
+/User/project/SAF775X_Radio.uvguix.11947
+/User/project/SAF775X_Radio.uvoptx
