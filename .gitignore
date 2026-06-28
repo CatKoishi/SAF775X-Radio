@@ -1,11 +1,13 @@
 /User/project/Listings/
 /User/project/Objects/
+/User/project/SAF775X_Radio.uvguix.11947
+/User/project/SAF775X_Radio.uvoptx
+
+/Hardware/SAF775x/
+/Hardware/UI/
 
 .vscode
 .vscode/*
 
 .idea
 .idea/*
-
-/User/project/SAF775X_Radio.uvguix.11947
-/User/project/SAF775X_Radio.uvoptx
