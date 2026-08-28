@@ -7,6 +7,9 @@
 
 #define DSP_I2C_ADDR      0x38
 
+#define AUDIO_SAMPLE_RATE_44K1  0x00U
+#define AUDIO_SAMPLE_RATE_48K   0x01U
+
 
 // Band RF Mode
 #define RFMODE_FM       0  //FM
@@ -203,7 +206,7 @@ void SetSoftMute(uint8_t level);
 void SwitchBand(uint8_t band);
 
 void TunerStructInit(struct Dirana3Radio* init, bool initPara);
-void TunerInit(void);
+void TunerInit(uint8_t audioSampleRate);
 void SetCoaxOutput(bool on);
 void SetHostI2S0Output(bool on);
 

@@ -51,16 +51,22 @@ const char menuDetail[6][41] = {
 };
 
 // Audio
-const char audioTitle[9][11] = {
+const char audioTitle[10][11] = {
   {"Vol & Bal"},
   {"DC Block"},
   {"Equalizer"},
   {"Tone"},
   {"COAX OUT"},
-	  {"I2S OUT"},
+  {"SMP RATE"},
+  {"I2S OUT"},
   {"Filter"},
   {"AutoLE"},
   {"UltraBass"},
+};
+
+const char sampleRateTitle[2][6] = {
+  {"44.1K"},
+  {"48K"},
 };
 
 const char EQTitle[9][4] = {
@@ -961,6 +967,13 @@ void UI_Display(int8_t index, bool init)
 
 
 
+/**
+ * @brief 绘制音频设置页面
+ * @param index 当前音频设置页索引
+ * @param band 当前频段或子项索引
+ * @param sel 当前参数索引
+ * @param init 是否强制重绘整页
+ */
 void UI_Audio(int8_t index, int8_t band, int8_t sel, bool init)
 {
   static int8_t lastIndex = 0;
@@ -1035,20 +1048,24 @@ void UI_Audio(int8_t index, int8_t band, int8_t sel, bool init)
       case 4:{ // coax out
         UI_DrawCheckBox(1,img_commonSet20x,"Coax Output",true,sDevice.bCoaxEnable);
       };break;
-      
-	      case 5:{ // i2s out
+
+	      case 5:{ // sample rate
+	        UI_DrawTextBox(1,img_commonSet20x,"Sample Rate",true,sampleRateTitle[sDevice.nAudioSampleRate]);
+	      };break;
+
+	      case 6:{ // i2s out
 	        UI_DrawCheckBox(1,img_commonSet20x,"Host I2S0 Out",true,sDevice.bI2SOutEnable);
 	      };break;
-	      
-	      case 6:{ // filter
-        
+
+	      case 7:{ // filter
+
       };break;
-      
-	      case 7:{ // ALE
-        
+
+	      case 8:{ // ALE
+
       };break;
-      
-	      case 8:{ // Ultra Bass
+
+	      case 9:{ // Ultra Bass
         GUI_DrawBuff(8,24+2,44,44,MODE_GREY,0,0,img_ultraBass44x44);
         GUI_Text(8+44+8, 24+2, 256,24+2+20,"Adaptive UltraBass",&Font20,COLOR_BLACK,COLOR_WHITE);
         GUI_Text(8+44+8, 48+2, 256,48+2+20,"[0 ~ 24] 1dB/div",&Font20,COLOR_BLACK,COLOR_WHITE);
@@ -1082,20 +1099,24 @@ void UI_Audio(int8_t index, int8_t band, int8_t sel, bool init)
     case 4:{ // coax out
       UI_DrawCheckBox(1,img_commonSet20x,"Coax Output",true,sDevice.bCoaxEnable);
     };break;
-    
-	    case 5:{ // i2s out
+
+	    case 5:{ // sample rate
+	      UI_DrawTextBox(1,img_commonSet20x,"Sample Rate",true,sampleRateTitle[sDevice.nAudioSampleRate]);
+	    };break;
+
+	    case 6:{ // i2s out
 	      UI_DrawCheckBox(1,img_commonSet20x,"Host I2S0 Out",true,sDevice.bI2SOutEnable);
 	    };break;
-	    
-	    case 6:{ // filter
-      
+
+	    case 7:{ // filter
+
     };break;
-    
-	    case 7:{ // ALE
-      
+
+	    case 8:{ // ALE
+
     };break;
-    
-	    case 8:{ // UltraBass
+
+	    case 9:{ // UltraBass
       UI_DrawFloat(72,sAudioKeyFunc.AUBGain,1,"dB");
     };break;
   }

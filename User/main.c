@@ -71,6 +71,7 @@ struct device sDevice = {
   .bAutoMono=true,
   .bCoaxEnable=false,
   .bI2SOutEnable=false,
+  .nAudioSampleRate=AUDIO_SAMPLE_RATE_44K1,
   .bSoftReboot=true,
   .sInfo.pid[0]=15,  // flash arrange
   .sInfo.pid[1]=2,  // version
@@ -127,7 +128,7 @@ CHANNEL nChannel[NUM_BANDS] = {
 
 char bandDbName[NUM_BANDS][7] = {"bandFm", "bandLw", "bandMw", "bandSw"};
 
-#define DEVICE_CFG_WORDS 5
+#define DEVICE_CFG_WORDS 6
 
 static bool writeConfigFile(const char *path, const void *data, lfs_size_t size)
 {
@@ -178,6 +179,10 @@ static lfs_ssize_t readConfigFile(const char *path, void *data, lfs_size_t size)
   return readLen;
 }
 
+/**
+ * @brief 保存指定类别的设置
+ * @param cfgID 设置类别
+ */
 void saveSettings(uint8_t cfgID)
 {
   uint32_t buffer_u32[DEVICE_CFG_WORDS] = {0};
@@ -188,6 +193,7 @@ void saveSettings(uint8_t cfgID)
     buffer_u32[2] = sDevice.bSoftReboot;
     buffer_u32[3] = sDevice.bCoaxEnable;
     buffer_u32[4] = sDevice.bI2SOutEnable;
+    buffer_u32[5] = sDevice.nAudioSampleRate;
     
     writeConfigFile("cfgDevice", buffer_u32, sizeof(buffer_u32));
   }
@@ -213,6 +219,10 @@ void saveSettings(uint8_t cfgID)
   
 }
 
+/**
+ * @brief 读取指定类别的设置
+ * @param cfgID 设置类别
+ */
 void readSettings(uint8_t cfgID)
 {
   uint32_t buffer_u32[DEVICE_CFG_WORDS] = {0};
@@ -229,6 +239,12 @@ void readSettings(uint8_t cfgID)
     }
     if(readLen >= (lfs_ssize_t)(5 * sizeof(uint32_t))) {
       sDevice.bI2SOutEnable = buffer_u32[4];
+    }
+    if(readLen >= (lfs_ssize_t)(6 * sizeof(uint32_t))) {
+      // Flash 数据异常时回退到原有的 44.1 kHz，避免 UI 使用越界索引。
+      sDevice.nAudioSampleRate = buffer_u32[5] <= AUDIO_SAMPLE_RATE_48K
+        ? buffer_u32[5]
+        : AUDIO_SAMPLE_RATE_44K1;
     }
   }
   
@@ -981,11 +997,14 @@ void MenuDisplay(void)
   
 }
 
+/**
+ * @brief 音频设置菜单
+ */
 void MenuAudio(void)
 {
   // vol, dc, eq, tone
-	  const int8_t paraNum[MENU_AUDIO_INDEX] = {0,0,2,0,0,0,0,0,0};
-	  const int8_t bandNum[MENU_AUDIO_INDEX] = {3,1,9,3,0,0,0,0,0};
+	  const int8_t paraNum[MENU_AUDIO_INDEX] = {0,0,2,0,0,0,0,0,0,0};
+	  const int8_t bandNum[MENU_AUDIO_INDEX] = {3,1,9,3,0,0,0,0,0,0};
   int8_t index = 0;
   int8_t paraSel = 0;
   int8_t bandSel = 0;
@@ -1080,22 +1099,26 @@ void MenuAudio(void)
         };break;
         
         case 4:{ // coax out
-          
+
         };break;
-        
-	        case 5:{ // i2s out
-	          
+
+	        case 5:{ // sample rate
+
 	        };break;
-	        
-	        case 6:{ // filter
-          
+
+	        case 6:{ // i2s out
+
         };break;
-        
-	        case 7:{ // ALE
-          
+
+	        case 7:{ // filter
+
         };break;
-        
-	        case 8:{ // UltraBass
+
+	        case 8:{ // ALE
+
+        };break;
+
+	        case 9:{ // UltraBass
           sAudioKeyFunc.AUBGain = inRangeInt(0,24,sAudioKeyFunc.AUBGain+lcode);
           setUltraBassGain(sAudioKeyFunc.AUBGain);
         };break;
@@ -1114,6 +1137,12 @@ void MenuAudio(void)
         ApplyAudioOutputByDetect(gpio_input_bit_get(GPIOA, GPIO_PIN_7));
       }
 	      else if(index == 5)
+	      {
+	        sDevice.nAudioSampleRate = sDevice.nAudioSampleRate == AUDIO_SAMPLE_RATE_44K1
+	          ? AUDIO_SAMPLE_RATE_48K
+	          : AUDIO_SAMPLE_RATE_44K1;
+	      }
+	      else if(index == 6)
 	      {
 	        sDevice.bI2SOutEnable = !sDevice.bI2SOutEnable;
 	        SetHostI2S0Output(sDevice.bI2SOutEnable);
@@ -1550,7 +1579,15 @@ void MenuMain(void)
       switch(index)
       {
         case 0 :MenuDisplay(),saveSettings(CFG_DISP);break;
-        case 1 :MenuAudio(),saveSettings(CFG_AUDIO),saveSettings(CFG_DEVICE);break;
+        case 1:{
+          uint8_t oldAudioSampleRate = sDevice.nAudioSampleRate;
+          MenuAudio();
+          saveSettings(CFG_AUDIO);
+          saveSettings(CFG_DEVICE);
+          // 保存后复用现有软重启流程，立即重建与采样率相关的 DSP 系数。
+          if(oldAudioSampleRate != sDevice.nAudioSampleRate)
+            bFlagReBoot = true;
+        };break;
         case 2 :MenuRadio(),saveSettings(CFG_RADIO);break;//Radio
         case 3 :MenuSearch();break;//ATS
         case 4 :MenuDevice(),saveSettings(CFG_DEVICE),saveSettings(CFG_RADIO);break;
@@ -1706,7 +1743,7 @@ int main(void)
   
   I2C_Init();
   TunerStructInit(&sTuner, false);
-  TunerInit();
+  TunerInit(sDevice.nAudioSampleRate);
   
   // special func
   if(sTuner.Config.bFMiPD == true || sTuner.Config.nFMANTsel == 1)
@@ -1897,7 +1934,7 @@ int main(void)
         gpio_bit_reset(GPIOA, GPIO_PIN_6);
       }
       
-      TunerInit();
+      TunerInit(sDevice.nAudioSampleRate);
       
       setDCFilter(sAudioBasic.dcBlock);
       setMainVol(sAudioBasic.mainVol);

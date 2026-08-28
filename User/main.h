@@ -44,7 +44,7 @@ OF SUCH DAMAGE.
 
 #define MENU_MAIN_INDEX    6
 #define MENU_DISP_INDEX    7
-#define MENU_AUDIO_INDEX    9
+#define MENU_AUDIO_INDEX    10
 #define MENU_RADIO_INDEX    12
 #define MENU_ATS_INDEX    6
 #define MENU_DEVICE_INDEX    5
@@ -87,6 +87,7 @@ struct device
 	uint8_t bAutoMono;
 	uint8_t bCoaxEnable;
 	uint8_t bI2SOutEnable;
+	uint8_t nAudioSampleRate;
 	uint8_t bSoftReboot;
 };
 
