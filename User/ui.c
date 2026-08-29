@@ -51,16 +51,15 @@ const char menuDetail[6][41] = {
 };
 
 // Audio
-const char audioTitle[9][11] = {
+const char audioTitle[8][11] = {
   {"Vol & Bal"},
   {"DC Block"},
   {"Equalizer"},
   {"Tone"},
-  {"COAX OUT"},
-	  {"I2S OUT"},
+  {"UltraBass"},
   {"Filter"},
   {"AutoLE"},
-  {"UltraBass"},
+  {"Wave Gen"},
 };
 
 const char EQTitle[9][4] = {
@@ -854,6 +853,7 @@ void UI_Main(bool init)
   }
 }
 
+
 void UI_Menu(int8_t index, bool init)
 {
   if(init)
@@ -901,9 +901,6 @@ void UI_Menu(int8_t index, bool init)
   // draw scroll bar
   UI_DrawScrollBar(MENU_MAIN_INDEX, index);
 }
-
-
-
 
 
 void UI_Display(int8_t index, bool init)
@@ -957,8 +954,6 @@ void UI_Display(int8_t index, bool init)
   UI_DrawScrollBar(MENU_DISP_INDEX, index);
   
 }
-
-
 
 
 void UI_Audio(int8_t index, int8_t band, int8_t sel, bool init)
@@ -1031,28 +1026,21 @@ void UI_Audio(int8_t index, int8_t band, int8_t sel, bool init)
         GUI_Text(8,72+2,-1,-1,"Treble:",&Font20,COLOR_BLACK,COLOR_WHITE);
         UI_DrawTone(band);
       };break;
-      
-      case 4:{ // coax out
-        UI_DrawCheckBox(1,img_commonSet20x,"Coax Output",true,sDevice.bCoaxEnable);
-      };break;
-      
-	      case 5:{ // i2s out
-	        UI_DrawCheckBox(1,img_commonSet20x,"Host I2S0 Out",true,sDevice.bI2SOutEnable);
-	      };break;
-	      
-	      case 6:{ // filter
-        
-      };break;
-      
-	      case 7:{ // ALE
-        
-      };break;
-      
-	      case 8:{ // Ultra Bass
+
+      case 4:{ // Ultra Bass
         GUI_DrawBuff(8,24+2,44,44,MODE_GREY,0,0,img_ultraBass44x44);
         GUI_Text(8+44+8, 24+2, 256,24+2+20,"Adaptive UltraBass",&Font20,COLOR_BLACK,COLOR_WHITE);
         GUI_Text(8+44+8, 48+2, 256,48+2+20,"[0 ~ 24] 1dB/div",&Font20,COLOR_BLACK,COLOR_WHITE);
         GUI_Text(8,72+2,256,72+2+20,"Gain:",&Font20,COLOR_BLACK,COLOR_WHITE);
+      };break;
+
+      case 5:{ // filter
+      };break;
+      
+	    case 6:{ // auto le
+	    };break;
+	      
+	    case 7:{ // wave gen
       };break;
     }
   }
@@ -1079,28 +1067,20 @@ void UI_Audio(int8_t index, int8_t band, int8_t sel, bool init)
       UI_DrawTone(band);
     };break;
     
-    case 4:{ // coax out
-      UI_DrawCheckBox(1,img_commonSet20x,"Coax Output",true,sDevice.bCoaxEnable);
-    };break;
-    
-	    case 5:{ // i2s out
-	      UI_DrawCheckBox(1,img_commonSet20x,"Host I2S0 Out",true,sDevice.bI2SOutEnable);
-	    };break;
-	    
-	    case 6:{ // filter
-      
-    };break;
-    
-	    case 7:{ // ALE
-      
-    };break;
-    
-	    case 8:{ // UltraBass
+    case 4:{ // Ultra Bass
       UI_DrawFloat(72,sAudioKeyFunc.AUBGain,1,"dB");
+    };break;
+    
+    case 5:{ // filter
+    };break;
+	    
+    case 6:{ // auto le
+    };break;
+    
+    case 7:{ // wave gen
     };break;
   }
 }
-
 
 
 void UI_Radio(int8_t index, bool init)
@@ -1163,7 +1143,6 @@ void UI_Radio(int8_t index, bool init)
   UI_DrawScrollBar(MENU_RADIO_INDEX, index);
   
 }
-
 
 
 void UI_Search(int8_t index, bool init)
@@ -1237,10 +1216,14 @@ void UI_Device(int8_t index, bool init)
       UI_DrawCheckBox(2,img_commonSet20x,"Soft Reboot", true, sDevice.bSoftReboot);
       UI_DrawCheckBox(3,img_commonSet20x,"Set Time", true, false);
     }
-    else
+    else if(nowPage == 1)
     {
-      UI_DrawCheckBox(0,img_commonSet20x,"Firmware Update", true, false);
-      GUI_Text(8,24,246,96,"Unique ID:\n\nTuner ID:\n\nFirmware ID:",&Font12,COLOR_BLACK,COLOR_WHITE);
+      UI_DrawCheckBox(0,img_commonSet20x,"I2S Out", true, sDevice.bI2SOutEnable);
+      UI_DrawCheckBox(1,img_commonSet20x,"SPDIF Out", true, sDevice.bCoaxEnable);
+      UI_DrawCheckBox(2,img_commonSet20x,"Encoder Swap", true, sDevice.bEncoderSwap);
+      UI_DrawCheckBox(3,img_commonSet20x,"Firmware Update", true, false);
+    } else {
+      GUI_Text(8,0,246,96,"Unique ID:\n\nTuner ID:\n\nFirmware ID:",&Font12,COLOR_BLACK,COLOR_WHITE);
       // UID
       for(uint8_t j = 0;j<3;j++)
       {
@@ -1253,20 +1236,19 @@ void UI_Device(int8_t index, bool init)
           else
             tmp = tmp - 10 + 'A';
           tid = (tid << 4) & 0xFFFFFFFF;
-          GUI_Char(8+j*56+i*7,36,tmp,&Font12,COLOR_BLACK,COLOR_WHITE);
+          GUI_Char(8+j*56+i*7,12,tmp,&Font12,COLOR_BLACK,COLOR_WHITE);
         }
       }
-      
       // Tuner ID
-      GUI_Number(8,60,(uint8_t)(sDevice.sInfo.tid>>24),ALIGNMENT_LEFT,&Font12,COLOR_BLACK,COLOR_WHITE);
-      GUI_Number(8+14,60,(uint8_t)(sDevice.sInfo.tid>>16),ALIGNMENT_LEFT,&Font12,COLOR_BLACK,COLOR_WHITE);
-      GUI_Number(8+14+14,60,(uint16_t)(sDevice.sInfo.tid&0xFFFF),ALIGNMENT_LEFT,&Font12,COLOR_BLACK,COLOR_WHITE);
+      GUI_Number(8,36,(uint8_t)(sDevice.sInfo.tid>>24),ALIGNMENT_LEFT,&Font12,COLOR_BLACK,COLOR_WHITE);
+      GUI_Number(8+14,36,(uint8_t)(sDevice.sInfo.tid>>16),ALIGNMENT_LEFT,&Font12,COLOR_BLACK,COLOR_WHITE);
+      GUI_Number(8+14+14,36,(uint16_t)(sDevice.sInfo.tid&0xFFFF),ALIGNMENT_LEFT,&Font12,COLOR_BLACK,COLOR_WHITE);
       
       // Firmware ID
-      GUI_Number(8,84,sDevice.sInfo.pid[1],ALIGNMENT_LEFT,&Font12,COLOR_BLACK,COLOR_WHITE);
-      GUI_Char(15,84,'.',&Font12,COLOR_BLACK,COLOR_WHITE);
-      GUI_Number(22,84,sDevice.sInfo.pid[2],ALIGNMENT_LEFT,&Font12,COLOR_BLACK,COLOR_WHITE);
-      GUI_Number(60,84,sDevice.sInfo.pid[3],ALIGNMENT_LEFT,&Font12,COLOR_BLACK,COLOR_WHITE);
+      GUI_Number(8,60,sDevice.sInfo.pid[1],ALIGNMENT_LEFT,&Font12,COLOR_BLACK,COLOR_WHITE);
+      GUI_Char(15,60,'.',&Font12,COLOR_BLACK,COLOR_WHITE);
+      GUI_Number(22,60,sDevice.sInfo.pid[2],ALIGNMENT_LEFT,&Font12,COLOR_BLACK,COLOR_WHITE);
+      GUI_Number(60,60,sDevice.sInfo.pid[3],ALIGNMENT_LEFT,&Font12,COLOR_BLACK,COLOR_WHITE);
     }
   }
   
@@ -1276,7 +1258,10 @@ void UI_Device(int8_t index, bool init)
     case 1 :UI_DrawCheckBox(1,img_commonSet20x,"Demo Mode", true, sTuner.Config.bDemoMode);break;
     case 2 :UI_DrawCheckBox(2,img_commonSet20x,"Soft Reboot", true, sDevice.bSoftReboot);break;
     case 3 :UI_DrawCheckBox(3,img_commonSet20x,"Set Time", true, false);break;
-    case 4 :UI_DrawCheckBox(0,img_commonSet20x,"Firmware Update", true, false);break;
+    case 4 :UI_DrawCheckBox(0,img_commonSet20x,"I2S Out", true, sDevice.bI2SOutEnable);break;
+    case 5 :UI_DrawCheckBox(1,img_commonSet20x,"SPDIF Out", true, sDevice.bCoaxEnable);break;
+    case 6 :UI_DrawCheckBox(2,img_commonSet20x,"Encoder Swap", true, sDevice.bEncoderSwap);break;
+    case 7 :UI_DrawCheckBox(3,img_commonSet20x,"Firmware Update", true, false);break;
     default : break;
   }
   
