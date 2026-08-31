@@ -201,7 +201,7 @@ const uint8_t DSP_INIT[] =
 	4,0xC0,0x03,0x11,0x0D,           // GPIO3:ANT0 ExtAGC
 //	2,0xC9,0x0A,                     // Enable INCA
 	4,0x00,0x10,0x22,0x74,           // Dummy Tuning, Start Active Mode
-	2,0x3F,0x00,                     // 默认 44.1 kHz，TunerInit 随后恢复用户选择
+	2,0x3F,0x00,                     // Audio Power Control:System Power;Sample Rate Freq:44.1kHz
 	3,0xA9,0x32,0x00,                // Front DAC on
 	3,0xA9,0x33,0x00,                // Rear DAC on
 	6,0xF3,0x03,0x82,0x80,0x00,0x00, // Switch On Sample Rate Converter 0,Primary Channel
@@ -949,8 +949,6 @@ void SetHostI2S0Output(bool on)
 		//   0x1A = 0 -> Philips format for Host I2S outputs
 		//   0x16 = 0 -> Host I2S output 0 enabled
 		Set_REGFree(3, 0xA9, 0x1A, 0x00);
-		Set_REGFree(3, 0xA9, 0x60, 0x00);
-		Set_REGFree(3, 0xA9, 0x65, 0x00);
 		Set_REGFree(3, 0xA9, 0x16, 0x00);
 		Set_ADSP(ADSP_X_HIIS0Outpntr, ADSP_X_FrontOutL_REL);
 	}

@@ -44,6 +44,9 @@ volatile uint8_t nowDET = 0;
 volatile int8_t lcode = 0;
 volatile int8_t rcode = 0;
 
+volatile int8_t* linkLcode = &lcode;
+volatile int8_t* linkRcode = &rcode;
+
 volatile uint8_t keyValue[KEY_NUM];
 
 /*************************************Configs**********************************/
@@ -73,10 +76,10 @@ struct device sDevice = {
   .bI2SOutEnable=false,
   .nAudioSampleRate=AUDIO_SAMPLE_RATE_44K1,
   .bSoftReboot=true,
-  .sInfo.pid[0]=15,  // flash arrange
+  .sInfo.pid[0]=18,  // flash arrange
   .sInfo.pid[1]=2,  // version
-  .sInfo.pid[2]=8,  // subversion
-  .sInfo.pid[3]=20260526
+  .sInfo.pid[2]=9,  // subversion
+  .sInfo.pid[3]=20260831
 };
 
 lfs_t lfs;
@@ -89,8 +92,6 @@ volatile uint32_t nQPeakDet;
 
 struct RDSBuffer sRDSBuffer;
 struct RDSData sRDSData;
-
-volatile bool tmpMono;
 
 uint32_t cfg_crc = 0;
 
@@ -128,7 +129,8 @@ CHANNEL nChannel[NUM_BANDS] = {
 
 char bandDbName[NUM_BANDS][7] = {"bandFm", "bandLw", "bandMw", "bandSw"};
 
-#define DEVICE_CFG_WORDS 6
+// cfgDevice 依次保存版本、单声道、软重启、同轴、I2S、编码器交换和采样率。
+#define DEVICE_CFG_WORDS 7
 
 static bool writeConfigFile(const char *path, const void *data, lfs_size_t size)
 {
@@ -180,8 +182,8 @@ static lfs_ssize_t readConfigFile(const char *path, void *data, lfs_size_t size)
 }
 
 /**
- * @brief 保存指定类别的设置
- * @param cfgID 设置类别
+ * @brief 保存指定类别的配置到 LittleFS
+ * @param cfgID 配置类别
  */
 void saveSettings(uint8_t cfgID)
 {
@@ -193,7 +195,8 @@ void saveSettings(uint8_t cfgID)
     buffer_u32[2] = sDevice.bSoftReboot;
     buffer_u32[3] = sDevice.bCoaxEnable;
     buffer_u32[4] = sDevice.bI2SOutEnable;
-    buffer_u32[5] = sDevice.nAudioSampleRate;
+    buffer_u32[5] = sDevice.bEncoderSwap;
+    buffer_u32[6] = sDevice.nAudioSampleRate;
     
     writeConfigFile("cfgDevice", buffer_u32, sizeof(buffer_u32));
   }
@@ -220,8 +223,8 @@ void saveSettings(uint8_t cfgID)
 }
 
 /**
- * @brief 读取指定类别的设置
- * @param cfgID 设置类别
+ * @brief 从 LittleFS 读取指定类别的配置
+ * @param cfgID 配置类别
  */
 void readSettings(uint8_t cfgID)
 {
@@ -230,20 +233,15 @@ void readSettings(uint8_t cfgID)
   
   if(cfgID == CFG_DEVICE || cfgID == CFG_ALL) {
     readLen = readConfigFile("cfgDevice", buffer_u32, sizeof(buffer_u32));
-    if(readLen >= (lfs_ssize_t)(3 * sizeof(uint32_t))) {
+    if(readLen >= (lfs_ssize_t)(DEVICE_CFG_WORDS * sizeof(uint32_t))) {
       sDevice.bAutoMono = buffer_u32[1];
       sDevice.bSoftReboot = buffer_u32[2];
-    }
-    if(readLen >= (lfs_ssize_t)(4 * sizeof(uint32_t))) {
       sDevice.bCoaxEnable = buffer_u32[3];
-    }
-    if(readLen >= (lfs_ssize_t)(5 * sizeof(uint32_t))) {
       sDevice.bI2SOutEnable = buffer_u32[4];
-    }
-    if(readLen >= (lfs_ssize_t)(6 * sizeof(uint32_t))) {
-      // Flash 数据异常时回退到原有的 44.1 kHz，避免 UI 使用越界索引。
-      sDevice.nAudioSampleRate = buffer_u32[5] <= AUDIO_SAMPLE_RATE_48K
-        ? buffer_u32[5]
+      sDevice.bEncoderSwap = buffer_u32[5];
+      // 采样率只允许两种硬件支持的值，异常配置统一回退到 44.1 kHz。
+      sDevice.nAudioSampleRate = buffer_u32[6] <= AUDIO_SAMPLE_RATE_48K
+        ? buffer_u32[6]
         : AUDIO_SAMPLE_RATE_44K1;
     }
   }
@@ -374,6 +372,21 @@ void flushKey(void)
     keyValue[i] = 0;
 }
 
+/**
+ * @brief 根据配置绑定左右编码器的旋转与按键输入
+ */
+void SwapEncoder(void)
+{
+  if(sDevice.bEncoderSwap)
+  {
+    linkLcode = &rcode;
+    linkRcode = &lcode;
+  } else {
+    linkLcode = &lcode;
+    linkRcode = &rcode;
+  }
+}
+
 void AdjustVolume(int8_t dir)
 {
   int8_t vol = sTuner.Audio.nVolume[sTuner.Audio.index];
@@ -464,18 +477,20 @@ static void ApplyAudioOutputByDetect(uint8_t hpDet)
   {
     sTuner.Audio.index = 1;
     gpio_bit_reset(GPIOA, GPIO_PIN_6);
-    if(sDevice.bCoaxEnable == false && sDevice.bI2SOutEnable == false)
+    if(sDevice.bCoaxEnable == false && sDevice.bI2SOutEnable == false) {
       gpio_bit_set(GPIOC, GPIO_PIN_4);
-    else
+      if(sDevice.bAutoMono == true)
+        sTuner.Config.bForceMono = true;
+      else
+        sTuner.Config.bForceMono = false;
+    }
+    else {
       gpio_bit_reset(GPIOC, GPIO_PIN_4);
-    if(sDevice.bAutoMono == true)
-      sTuner.Config.bForceMono = true;
-    else
       sTuner.Config.bForceMono = false;
+    }
   }
 
-  if(sDevice.bCoaxEnable)
-    SetCoaxOutput(true);
+  SetRadioSignal();
 }
 
 void reFillBackLightTimer(void)
@@ -998,13 +1013,13 @@ void MenuDisplay(void)
 }
 
 /**
- * @brief 音频设置菜单
+ * @brief 处理音频设置菜单及采样率切换
  */
 void MenuAudio(void)
 {
-  // vol, dc, eq, tone
-	  const int8_t paraNum[MENU_AUDIO_INDEX] = {0,0,2,0,0,0,0,0,0,0};
-	  const int8_t bandNum[MENU_AUDIO_INDEX] = {3,1,9,3,0,0,0,0,0,0};
+  // 音频菜单依次为音量、DC Block、EQ、Tone、采样率、UltraBass、Filter、ALE、Wave Gen。
+  const int8_t paraNum[MENU_AUDIO_INDEX] = {1,1,2,1,0,1,1,1,1};
+  const int8_t bandNum[MENU_AUDIO_INDEX] = {3,1,9,3,0,1,1,1,1};
   int8_t index = 0;
   int8_t paraSel = 0;
   int8_t bandSel = 0;
@@ -1098,29 +1113,25 @@ void MenuAudio(void)
           setTone(sAudioTone, bandSel);
         };break;
         
-        case 4:{ // coax out
-
+        case 4:{ // sample rate
+          // 采样率在确认键中切换，旋转编码器不直接修改该配置。
         };break;
 
-	        case 5:{ // sample rate
-
-	        };break;
-
-	        case 6:{ // i2s out
-
-        };break;
-
-	        case 7:{ // filter
-
-        };break;
-
-	        case 8:{ // ALE
-
-        };break;
-
-	        case 9:{ // UltraBass
+        case 5:{ // ultra bass
           sAudioKeyFunc.AUBGain = inRangeInt(0,24,sAudioKeyFunc.AUBGain+lcode);
           setUltraBassGain(sAudioKeyFunc.AUBGain);
+        };break;
+        
+        case 6:{ // filter
+          
+        };break;
+	        
+        case 7:{ // ale
+          
+        };break;
+        
+        case 8:{ // wave gen
+          
         };break;
       }
       UI_Audio(index,bandSel,paraSel,false);
@@ -1132,22 +1143,10 @@ void MenuAudio(void)
       keyValue[KEY_OK] = 0;
       if(index == 4)
       {
-        sDevice.bCoaxEnable = !sDevice.bCoaxEnable;
-        SetCoaxOutput(sDevice.bCoaxEnable);
-        ApplyAudioOutputByDetect(gpio_input_bit_get(GPIOA, GPIO_PIN_7));
+        sDevice.nAudioSampleRate = sDevice.nAudioSampleRate == AUDIO_SAMPLE_RATE_44K1
+          ? AUDIO_SAMPLE_RATE_48K
+          : AUDIO_SAMPLE_RATE_44K1;
       }
-	      else if(index == 5)
-	      {
-	        sDevice.nAudioSampleRate = sDevice.nAudioSampleRate == AUDIO_SAMPLE_RATE_44K1
-	          ? AUDIO_SAMPLE_RATE_48K
-	          : AUDIO_SAMPLE_RATE_44K1;
-	      }
-	      else if(index == 6)
-	      {
-	        sDevice.bI2SOutEnable = !sDevice.bI2SOutEnable;
-	        SetHostI2S0Output(sDevice.bI2SOutEnable);
-          ApplyAudioOutputByDetect(gpio_input_bit_get(GPIOA, GPIO_PIN_7));
-	      }
       else if(bandNum[index] > 0)
       {
         bandSel = inRangeLoop(0,bandNum[index]-1,bandSel,1);
@@ -1463,7 +1462,7 @@ void MenuDevice(void)
       UI_Device(index,false);
     }
     
-    // 左编码器旋转
+    // 左编码器按下
     if(keyValue[KEY_OK] != 0)
     {
       switch(index)
@@ -1483,6 +1482,21 @@ void MenuDevice(void)
           // enter time set
         };break;
         case 4:{
+          // iis out
+          sDevice.bI2SOutEnable = !sDevice.bI2SOutEnable;
+          SetHostI2S0Output(sDevice.bI2SOutEnable);
+        };break;
+        case 5:{
+          // spdif out
+          sDevice.bCoaxEnable = !sDevice.bCoaxEnable;
+          SetCoaxOutput(sDevice.bCoaxEnable);
+        };break;
+        case 6:{
+          // encoder swap
+          sDevice.bEncoderSwap = !sDevice.bEncoderSwap;
+          SwapEncoder();
+        };break;
+        case 7:{
           // enter firmware update
           keyValue[KEY_OK] = 0;
           GUI_Text(8,24,248,96,"Hold OK to confirm",&Font24,COLOR_BLACK,COLOR_WHITE);
@@ -1579,12 +1593,12 @@ void MenuMain(void)
       switch(index)
       {
         case 0 :MenuDisplay(),saveSettings(CFG_DISP);break;
-        case 1:{
+        case 1 :{
           uint8_t oldAudioSampleRate = sDevice.nAudioSampleRate;
           MenuAudio();
           saveSettings(CFG_AUDIO);
           saveSettings(CFG_DEVICE);
-          // 保存后复用现有软重启流程，立即重建与采样率相关的 DSP 系数。
+          // 采样率改变后复用软重启流程，重新加载与采样率相关的 DSP 系数。
           if(oldAudioSampleRate != sDevice.nAudioSampleRate)
             bFlagReBoot = true;
         };break;
@@ -1732,6 +1746,7 @@ int main(void)
   }
   
   delay_ms(5);
+  SwapEncoder();
   
   // lcd config
   lcd_dma_init();
@@ -1789,8 +1804,8 @@ int main(void)
   SetHostI2S0Output(sDevice.bI2SOutEnable);
   lastDET = nowDET;
   
+  SetFMStereo(sTuner.Config.nFMST);
   SetFMStereoImprovement(sTuner.Config.bFMSI);
-  tmpMono = sTuner.Config.bForceMono;
   
   SetMute(sTuner.Audio.bMuted);
   
@@ -1891,10 +1906,6 @@ int main(void)
     
     VolumeHandler();
     
-    if(tmpMono != sTuner.Config.bForceMono) {
-      SetFMStereo(sTuner.Config.nFMST);
-      tmpMono = sTuner.Config.bForceMono;
-    }
     /***************************/
     
     if(bFlagGSA == true && !sDisplay.emiFree)
@@ -1948,12 +1959,12 @@ int main(void)
       nowDET = gpio_input_bit_get(GPIOA,GPIO_PIN_7);
       ApplyAudioOutputByDetect(nowDET);
       SetCoaxOutput(sDevice.bCoaxEnable);
-	      SetHostI2S0Output(sDevice.bI2SOutEnable);
+	    SetHostI2S0Output(sDevice.bI2SOutEnable);
       
       lastDET = nowDET;
-      
+
+      SetFMStereo(sTuner.Config.nFMST);
       SetFMStereoImprovement(sTuner.Config.bFMSI);
-      tmpMono = sTuner.Config.bForceMono;
       
       initSignalScaler();
 
@@ -2017,9 +2028,9 @@ void TIM_Callback(uint8_t tim)
     if(nowA1 > lastA1)
     {
       if(nowA1 == gpio_input_bit_get(GPIOB,GPIO_PIN_1))
-        lcode = -1;
+        *linkLcode = -1;
       else
-        lcode = 1;
+        *linkLcode = 1;
       reFillBackLightTimer();
     }
     lastA1 = nowA1;
@@ -2028,9 +2039,9 @@ void TIM_Callback(uint8_t tim)
     if(nowA2 > lastA2)
     {
       if(nowA2 == gpio_input_bit_get(GPIOB,GPIO_PIN_11))
-        rcode = -1;
+        *linkRcode = -1;
       else
-        rcode = 1;
+        *linkRcode = 1;
       reFillBackLightTimer();
     }
     lastA2 = nowA2;
@@ -2224,7 +2235,11 @@ void ADC_Callback(uint8_t adc, char group)
       else if(valRegular < 205)  //0, 0
       {
         // ENC2 KEY
-        KEY_Handler(KEY_RENC, 0);
+        if(sDevice.bEncoderSwap == true)
+          KEY_Handler(KEY_LENC, 0);
+        else {
+          KEY_Handler(KEY_RENC, 0);
+        }
       }
       else if(valRegular > 3890)
       {
@@ -2233,10 +2248,17 @@ void ADC_Callback(uint8_t adc, char group)
         KEY_Handler(KEY_UP, 1);
         KEY_Handler(KEY_DOWN, 1);
         KEY_Handler(KEY_OK, 1);
-        KEY_Handler(KEY_RENC, 1);
+        if(sDevice.bEncoderSwap == true)
+          KEY_Handler(KEY_LENC, 1);
+        else {
+          KEY_Handler(KEY_RENC, 1);
+        }
       }
       
-      KEY_Handler(KEY_LENC, gpio_input_bit_get(GPIOA, GPIO_PIN_0));
+      if(sDevice.bEncoderSwap == true)
+        KEY_Handler(KEY_RENC, gpio_input_bit_get(GPIOA, GPIO_PIN_0));
+      else
+        KEY_Handler(KEY_LENC, gpio_input_bit_get(GPIOA, GPIO_PIN_0));
       
       adc_interrupt_flag_clear(ADC0,ADC_INT_FLAG_EOC);
     }
