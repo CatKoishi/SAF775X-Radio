@@ -13,6 +13,8 @@
 
 struct Dirana3Radio *sys;
 
+static void SetAudioSampleRate(uint8_t sampleRate);
+
 extern struct RDSData sRDSData;
 
 /************************************************************************************************************************************/
@@ -875,12 +877,14 @@ void TunerStructInit(struct Dirana3Radio* init, bool initPara)
 }
 
 /**
- * @brief  SAF7751初始化
+ * @brief SAF7751初始化
+ * @param audioSampleRate 全局音频采样率，仅允许 44.1 kHz 或 48 kHz
  */
-void TunerInit(void)
+void TunerInit(uint8_t audioSampleRate)
 {
 	BootDirana3();
-	
+	SetAudioSampleRate(audioSampleRate);
+
 	SetTuner();
 	SetTunerOPT();
 	SetRadioDSP();
@@ -890,6 +894,20 @@ void TunerInit(void)
 	SetSoftMute(sys->Config.nSoftMute[sys->Radio.nRFMode]);
   
 	TuneFreq(sys->Radio.nBandFreq[sys->Radio.nBandMode], Preset);
+}
+
+/**
+ * @brief 设置 SAF775x 全局音频采样率
+ * @param sampleRate 采样率寄存器值，0 为 44.1 kHz，1 为 48 kHz
+ */
+static void SetAudioSampleRate(uint8_t sampleRate)
+{
+	// 调用方传入非法值时保持原有 44.1 kHz 行为。
+	if(sampleRate > AUDIO_SAMPLE_RATE_48K)
+		sampleRate = AUDIO_SAMPLE_RATE_44K1;
+
+	setADSPSampleRate(sampleRate == AUDIO_SAMPLE_RATE_48K ? 48000.0f : 44100.0f);
+	Set_REGFree(2, 0x3F, sampleRate);
 }
 
 void SetCoaxOutput(bool on)

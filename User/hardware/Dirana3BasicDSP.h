@@ -19,7 +19,6 @@
 #define __DIRANA3_BASIC_D_S_P_H_
 
 #define ADSP_E  2.718281828
-#define ADSP_FS 44100.0
 #define ADSP_PI PI
 //#define ADSP_PI 3.141592654
 #define ADSP_SQRT2   1.414213562
@@ -198,6 +197,7 @@ struct keyFunc
 
 
 
+void setADSPSampleRate(float sampleRate);
 void initBasicControl(struct basicControl* init, bool initPara);
 void setMainVol(float VoldB);
 int8_t setBalance(char channel, float att);

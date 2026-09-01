@@ -56,10 +56,16 @@ const char audioTitle[8][11] = {
   {"DC Block"},
   {"Equalizer"},
   {"Tone"},
+  {"SMP RATE"},
   {"UltraBass"},
   {"Filter"},
   {"AutoLE"},
   {"Wave Gen"},
+};
+
+const char sampleRateTitle[2][6] = {
+  {"44.1K"},
+  {"48K"},
 };
 
 const char EQTitle[9][4] = {
@@ -956,6 +962,13 @@ void UI_Display(int8_t index, bool init)
 }
 
 
+/**
+ * @brief 绘制音频设置页面
+ * @param index 当前音频设置项
+ * @param band 当前子项
+ * @param sel 当前参数
+ * @param init 是否强制重绘整页
+ */
 void UI_Audio(int8_t index, int8_t band, int8_t sel, bool init)
 {
   static int8_t lastIndex = 0;
@@ -1027,20 +1040,24 @@ void UI_Audio(int8_t index, int8_t band, int8_t sel, bool init)
         UI_DrawTone(band);
       };break;
 
-      case 4:{ // Ultra Bass
+      case 4:{ // sample rate
+        UI_DrawTextBox(1,img_commonSet20x,"Sample Rate",true,sampleRateTitle[sDevice.nAudioSampleRate]);
+      };break;
+
+      case 5:{ // Ultra Bass
         GUI_DrawBuff(8,24+2,44,44,MODE_GREY,0,0,img_ultraBass44x44);
         GUI_Text(8+44+8, 24+2, 256,24+2+20,"Adaptive UltraBass",&Font20,COLOR_BLACK,COLOR_WHITE);
         GUI_Text(8+44+8, 48+2, 256,48+2+20,"[0 ~ 24] 1dB/div",&Font20,COLOR_BLACK,COLOR_WHITE);
         GUI_Text(8,72+2,256,72+2+20,"Gain:",&Font20,COLOR_BLACK,COLOR_WHITE);
       };break;
 
-      case 5:{ // filter
+      case 6:{ // filter
       };break;
       
-	    case 6:{ // auto le
+	    case 7:{ // auto le
 	    };break;
 	      
-	    case 7:{ // wave gen
+	    case 8:{ // wave gen
       };break;
     }
   }
@@ -1067,17 +1084,21 @@ void UI_Audio(int8_t index, int8_t band, int8_t sel, bool init)
       UI_DrawTone(band);
     };break;
     
-    case 4:{ // Ultra Bass
+    case 4:{ // sample rate
+      UI_DrawTextBox(1,img_commonSet20x,"Sample Rate",true,sampleRateTitle[sDevice.nAudioSampleRate]);
+    };break;
+
+    case 5:{ // Ultra Bass
       UI_DrawFloat(72,sAudioKeyFunc.AUBGain,1,"dB");
     };break;
     
-    case 5:{ // filter
+    case 6:{ // filter
     };break;
 	    
-    case 6:{ // auto le
+    case 7:{ // auto le
     };break;
     
-    case 7:{ // wave gen
+    case 8:{ // wave gen
     };break;
   }
 }

@@ -14,6 +14,9 @@
 
 float maxToneScal;
 float maxGEqScal;
+static float adspSampleRate = 44100.0f;
+
+#define ADSP_FS adspSampleRate
 
 /***************************************************************************/
 
@@ -87,6 +90,16 @@ static uint32_t dataConv(char dataMode, float data)
 
 
 /***************************************************************************/
+
+
+/**
+ * @brief 设置 DSP 系数计算使用的采样率
+ * @param sampleRate 当前全局音频采样率
+ */
+void setADSPSampleRate(float sampleRate)
+{
+	adspSampleRate = sampleRate;
+}
 
 
 void WaitEasyProgram(void)
